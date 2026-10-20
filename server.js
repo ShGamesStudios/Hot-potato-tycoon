@@ -81,7 +81,7 @@ function tickRoom(room,dt){
   // Consume edge-triggered actions only once, even if snapshots are frequent.
   for(const p of room.players.values()){
     const i=p.input||{};
-    if(i.throw){i.throw=false;if(room.active && !room.projectile && room.holderId===p.id && p.alive){const aimX=Number.isFinite(i.aimX)?i.aimX:p.x+Math.cos(p.facingAngle)*350;const aimY=Number.isFinite(i.aimY)?i.aimY:p.y+Math.sin(p.facingAngle)*350;const angle=Math.atan2(aimY-p.y,aimX-p.x);const maxDistance=Math.min(900,Math.max(120,dist(p.x,p.y,aimX,aimY)));room.projectile={x:p.x,y:p.y,vx:Math.cos(angle)*CONFIG.throwSpeed,vy:Math.sin(angle)*CONFIG.throwSpeed,throwerId:p.id,travelled:0,maxDistance};room.holderId=null;event(p.name+' THREW THE SPUD!');}}
+    if(i.throw){i.throw=false;if(room.active && !room.projectile && room.holderId===p.id && p.alive){const aimX=Number.isFinite(i.aimX)?i.aimX:p.x+Math.cos(p.facingAngle)*350;const aimY=Number.isFinite(i.aimY)?i.aimY:p.y+Math.sin(p.facingAngle)*350;const angle=Math.atan2(aimY-p.y,aimX-p.x);const maxDistance=Math.min(900,Math.max(120,dist(p.x,p.y,aimX,aimY)));room.projectile={x:p.x,y:p.y,vx:Math.cos(angle)*CONFIG.throwSpeed,vy:Math.sin(angle)*CONFIG.throwSpeed,throwerId:p.id,travelled:0,maxDistance};room.holderId=null;event(room,p.name+' THREW THE SPUD!');}}
     if(i.trap){i.trap=false;}
     if(i.dash) i.dash=false;
   }
@@ -121,5 +121,5 @@ wss.on('connection',ws=>{
     broadcast(room,{type:'status',message:`A player disconnected. ${room.players.size} player(s) remain.`});
   });
 });
-setInterval(()=>{const now=Date.now();for(const room of rooms.values()){const dt=Math.min(.05,Math.max(.001,(now-room.lastTick)/1000));room.lastTick=now;tickRoom(room,dt);broadcast(room,snapshot(room));}},50);
+setInterval(()=>{const now=Date.now();for(const room of rooms.values()){const dt=Math.min(.05,Math.max(.001,(now-room.lastTick)/1000));room.lastTick=now;try{tickRoom(room,dt);broadcast(room,snapshot(room));}catch(err){console.error('Room error:',err);}}},50);
 server.listen(PORT,'0.0.0.0',()=>console.log(`Hot Potato Tycoon online server listening on port ${PORT}`));
