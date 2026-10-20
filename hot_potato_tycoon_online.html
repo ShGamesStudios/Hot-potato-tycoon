@@ -1541,17 +1541,7 @@
             update(dt);
             render();
 
-            document.getElementById('hostOnlineBtn').addEventListener('click', () => {
-            document.getElementById('playerNameInput').blur();
-            connectOnline('create');
-        });
-        document.getElementById('joinOnlineBtn').addEventListener('click', () => {
-            document.getElementById('playerNameInput').blur();
-            const code = document.getElementById('roomCodeInput').value.trim();
-            if (!code) { onlineStatus('Enter a room code to join, or click CREATE ROOM.'); return; }
-            connectOnline('join');
-        });
-        requestAnimationFrame(gameLoop);
+            requestAnimationFrame(gameLoop);
         }
 
         // --- ONLINE MULTIPLAYER CLIENT ---
