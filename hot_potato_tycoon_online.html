@@ -350,13 +350,13 @@
             <button class="btn" id="startBtn">PLAY OFFLINE</button>
             <div class="online-panel">
                 <div style="font-weight:900;color:#80d8ff;text-align:center">ONLINE MULTIPLAYER</div>
-                <input id="serverUrlInput" aria-label="Server URL" placeholder="Server URL (leave default)" autocomplete="url">
-                <input id="roomCodeInput" aria-label="Room code" placeholder="Room code to join (or leave blank to create)" maxlength="12" autocomplete="off">
+                <input id="roomCodeInput" aria-label="Room code" placeholder="Enter room code to join" maxlength="12" autocomplete="off">
                 <div class="online-actions">
                     <button class="btn" id="hostOnlineBtn">CREATE ROOM</button>
                     <button class="btn" id="joinOnlineBtn">JOIN ROOM</button>
                 </div>
-                <div id="onlineStatus">Create a room and share its code with a friend.</div>
+                <button class="btn" id="copyRoomCodeBtn" type="button" hidden>COPY ROOM CODE</button>
+                <div id="onlineStatus">Create a room, then copy its code and share it with a friend.</div>
             </div>
         </div>
 
@@ -1561,14 +1561,31 @@
             const hud = document.getElementById('onlineHudStatus');
             if (hud && networkGame.mode) hud.textContent = 'ROOM ' + networkGame.room + ' · ' + message + ' · WASD Move / SPACE Throw / SHIFT Dash';
         }
+        // Multiplayer connects automatically to the server hosting this page.
+        // The game HTML must be served by the Render Web Service (not opened as a local file).
         function getServerUrl() {
-            const typed = document.getElementById('serverUrlInput').value.trim();
-            if (typed) return typed.replace(/\/$/, '');
             if (location.protocol === 'http:' || location.protocol === 'https:')
                 return (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host;
             return 'ws://localhost:8080';
         }
+        async function copyRoomCode() {
+            const code = networkGame.room || document.getElementById('roomCodeInput').value.trim().toUpperCase();
+            if (!code) { onlineStatus('Create or join a room first.'); return; }
+            try {
+                if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(code);
+                else {
+                    const temp = document.createElement('textarea'); temp.value = code; temp.style.position = 'fixed'; temp.style.opacity = '0';
+                    document.body.appendChild(temp); temp.select();
+                    const ok = document.execCommand('copy'); temp.remove(); if (!ok) throw new Error('copy failed');
+                }
+                onlineStatus('Room code ' + code + ' copied! Share it with your friend.');
+                const btn = document.getElementById('copyRoomCodeBtn'); btn.textContent = 'COPIED!';
+                setTimeout(() => { if (btn) btn.textContent = 'COPY ROOM CODE'; }, 1800);
+            } catch (_) { onlineStatus('Your room code is ' + code + ' — select and copy it from the room-code box.'); }
+        }
+        document.getElementById('copyRoomCodeBtn').addEventListener('click', copyRoomCode);
         function connectOnline(action) {
+            document.getElementById('copyRoomCodeBtn').hidden = true;
             if (networkGame.socket && networkGame.socket.readyState <= WebSocket.OPEN) {
                 try { networkGame.socket.close(); } catch (_) {}
             }
@@ -1589,7 +1606,9 @@
                     networkGame.connected = true; networkGame.mode = true;
                     networkGame.playerId = msg.playerId; networkGame.room = msg.room;
                     document.getElementById('roomCodeInput').value = msg.room;
-                    onlineStatus('Room ' + msg.room + ' — share this code with your friend. Waiting for another player…');
+                    document.getElementById('copyRoomCodeBtn').hidden = false;
+                    document.getElementById('copyRoomCodeBtn').textContent = 'COPY ROOM CODE';
+                    onlineStatus('Room ' + msg.room + ' created/joined — copy the code to invite a friend. Waiting for another player…');
                     document.getElementById('menuScreen').classList.add('hidden');
                     document.getElementById('hudLayer').style.display = 'flex';
                     document.getElementById('gameOverScreen').classList.add('hidden');
