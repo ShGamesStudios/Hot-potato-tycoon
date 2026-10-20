@@ -1,0 +1,9 @@
+{
+  "name": "hot-potato-tycoon-online",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WebSocket multiplayer server for Hot Potato Tycoon",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "dependencies": { "ws": "^8.18.0" }
+}
