@@ -82,7 +82,7 @@ function tickRoom(room,dt){
     if(p.isBot) botThink(room,p,dt);
     const i=p.input||{};
     if(p.dashCdTimer>0) p.dashCdTimer=Math.max(0,p.dashCdTimer-dt);
-    if(i.dash && p.dashCdTimer<=0 && p.dashTimer<=0){p.dashTimer=CONFIG.dashDuration;p.dashCdTimer=CONFIG.dashCooldown;p.facingAngle=Math.atan2((i.aimY||p.y)-p.y,(i.aimX||p.x)-p.x);event(room,p.name+' USED A DASH!');}
+    if(i.dash && p.dashCdTimer<=0 && p.dashTimer<=0){p.dashTimer=CONFIG.dashDuration;p.dashCdTimer=CONFIG.dashCooldown;p.facingAngle=Math.atan2((i.aimY||p.y)-p.y,(i.aimX||p.x)-p.x);}
     let mx=(i.right?1:0)-(i.left?1:0), my=(i.down?1:0)-(i.up?1:0);
     if(mx&&my){mx*=Math.SQRT1_2;my*=Math.SQRT1_2;}
     if(p.dashTimer>0){p.dashTimer=Math.max(0,p.dashTimer-dt);p.vx=Math.cos(p.facingAngle)*CONFIG.dashSpeed;p.vy=Math.sin(p.facingAngle)*CONFIG.dashSpeed;}
