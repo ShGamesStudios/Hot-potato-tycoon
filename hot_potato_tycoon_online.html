@@ -351,6 +351,7 @@
             <button class="btn" id="startBtn">PLAY OFFLINE</button>
             <div class="online-panel">
                 <div style="font-weight:900;color:#80d8ff;text-align:center">ONLINE MULTIPLAYER</div>
+                <button class="btn" id="quickMatchBtn" type="button">QUICK MATCH (BOTS FILL EMPTY SPOTS)</button>
                 <input id="roomCodeInput" aria-label="Room code" placeholder="Enter room code to join" maxlength="12" autocomplete="off">
                 <div class="online-actions">
                     <button class="btn" id="hostOnlineBtn">CREATE ROOM</button>
@@ -383,6 +384,7 @@
         </div>
     </div>
 
+    <button id="muteBtn" type="button" title="Music on/off (M)" onclick="toggleMute()" style="position:fixed;right:14px;bottom:14px;z-index:60;width:46px;height:46px;border-radius:50%;border:3px solid #fff;background:#ff6d00;font-size:22px;cursor:pointer">🔊</button>
     <script>
         // --- SOUND SYNTHESIZER (Web Audio API) ---
         class SoundEngine {
@@ -397,6 +399,51 @@
                 if (this.ctx.state === 'suspended') {
                     this.ctx.resume();
                 }
+                this.startMusic();
+            }
+            setMuted(m) { this.muted = m; if (this.master) this.master.gain.value = m ? 0 : 0.35; }
+            startMusic() {
+                if (this.musicOn || !this.ctx) return;
+                this.musicOn = true;
+                const c = this.ctx;
+                this.master = c.createGain();
+                this.master.gain.value = this.muted ? 0 : 0.35;
+                this.master.connect(c.destination);
+                const nb = c.createBuffer(1, c.sampleRate, c.sampleRate), nd = nb.getChannelData(0);
+                for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+                const roots = [55, 43.65, 65.41, 49], thirds = [3, 4, 4, 4], step = 60 / 136 / 2;
+                let n = 0, t = c.currentTime + 0.1;
+                const tone = (f, type, when, dur, vol) => {
+                    const o = c.createOscillator(), g = c.createGain();
+                    o.type = type; o.frequency.value = f;
+                    g.gain.setValueAtTime(vol, when); g.gain.exponentialRampToValueAtTime(0.001, when + dur);
+                    o.connect(g); g.connect(this.master); o.start(when); o.stop(when + dur);
+                };
+                const noise = (when, dur, vol, hp) => {
+                    const s = c.createBufferSource(), g = c.createGain(), f = c.createBiquadFilter();
+                    s.buffer = nb; f.type = 'highpass'; f.frequency.value = hp;
+                    g.gain.setValueAtTime(vol, when); g.gain.exponentialRampToValueAtTime(0.001, when + dur);
+                    s.connect(f); f.connect(g); g.connect(this.master); s.start(when); s.stop(when + dur);
+                };
+                const kick = when => {
+                    const o = c.createOscillator(), g = c.createGain();
+                    o.frequency.setValueAtTime(130, when); o.frequency.exponentialRampToValueAtTime(40, when + 0.12);
+                    g.gain.setValueAtTime(0.9, when); g.gain.exponentialRampToValueAtTime(0.001, when + 0.18);
+                    o.connect(g); g.connect(this.master); o.start(when); o.stop(when + 0.2);
+                };
+                const sched = () => {
+                    while (t < c.currentTime + 0.5) {
+                        const bar = Math.floor(n / 16) % 4, s = n % 16, r = roots[bar];
+                        if (s % 4 === 0) kick(t);
+                        if (s % 8 === 4) noise(t, 0.12, 0.35, 1500);
+                        if (s % 2 === 1) noise(t, 0.04, 0.12, 7000);
+                        if (s % 2 === 0) tone(r * (s % 4 === 2 ? 2 : 1), 'sawtooth', t, step * 1.6, 0.16);
+                        const off = [0, thirds[bar], 7, 12][s % 4];
+                        tone(r * 8 * Math.pow(2, off / 12), 'square', t, step * 0.9, 0.05);
+                        t += step; n++;
+                    }
+                };
+                sched(); setInterval(sched, 150);
             }
             playTone(freq, type, duration, vol = 0.1) {
                 if (!this.ctx) return;
@@ -444,6 +491,14 @@
         }
 
         const sound = new SoundEngine();
+        ['pointerdown', 'keydown'].forEach(ev => window.addEventListener(ev, () => sound.init()));
+        window.addEventListener('keydown', e => {
+            if (e.key.toLowerCase() === 'm' && e.target.tagName !== 'INPUT') toggleMute();
+        });
+        function toggleMute() {
+            sound.setMuted(!sound.muted);
+            document.getElementById('muteBtn').textContent = sound.muted ? '\u{1F507}' : '\u{1F50A}';
+        }
 
         // --- GAME CONFIGURATION & STATE ---
         const canvas = document.getElementById('gameCanvas');
@@ -1196,7 +1251,7 @@
                 { x: 1200, y: 900, r: 60, color: '#f44336' }
             ];
 
-            for (let i = 0; i < 70; i++) {
+            for (let i = 0; i < 150; i++) {
                 let side = Math.floor(Math.random() * 4);
                 let x = 0, y = 0;
                 if (side === 0) { x = rand(50, CONFIG.worldWidth - 50); y = rand(20, 90); }
@@ -1377,6 +1432,7 @@
             if (potatoHolder && potatoHolder.alive) {
                 potatoHolder.alive = false;
                 showAnnouncement(`${potatoHolder.name} OBLITERATED!`);
+                shockwaves.push({ x: potatoHolder.x, y: potatoHolder.y, t: Date.now() });
                 for (let i = 0; i < 50; i++) {
                     particles.push(new Particle(potatoHolder.x, potatoHolder.y, '#ff5722', 8, 0.9));
                     particles.push(new Particle(potatoHolder.x, potatoHolder.y, '#ffeb3b', 6, 0.7));
@@ -1441,74 +1497,81 @@
             ctx.translate(canvas.width / 2, canvas.height / 2);
             ctx.translate(-camX, -camY);
 
-            ctx.fillStyle = '#1e2436';
-            ctx.fillRect(0, 0, CONFIG.worldWidth, CONFIG.worldHeight);
-
-            ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-            ctx.lineWidth = 2;
-            const gridSize = 100;
-            for (let x = 0; x <= CONFIG.worldWidth; x += gridSize) {
-                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, CONFIG.worldHeight); ctx.stroke();
+            const W = CONFIG.worldWidth, H = CONFIG.worldHeight, now = Date.now();
+            const rr = (x, y, w, h, r) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); };
+            // stands
+            ctx.fillStyle = '#232842'; ctx.fillRect(0, 0, W, H);
+            ctx.fillStyle = '#303a6b';
+            ctx.fillRect(0, 0, W, 70); ctx.fillRect(0, H - 70, W, 70); ctx.fillRect(0, 0, 70, H); ctx.fillRect(W - 70, 0, 70, H);
+            // checkered floor
+            for (let x = 60; x < W - 60; x += 100) for (let y = 60; y < H - 60; y += 100) {
+                ctx.fillStyle = ((x / 100 + y / 100) % 2 === 0) ? '#8f9bb8' : '#838fad';
+                ctx.fillRect(x, y, Math.min(100, W - 60 - x), Math.min(100, H - 60 - y));
             }
-            for (let y = 0; y <= CONFIG.worldHeight; y += gridSize) {
-                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(CONFIG.worldWidth, y); ctx.stroke();
+            // rim + neon lights
+            ctx.strokeStyle = '#1b2036'; ctx.lineWidth = 16; ctx.strokeRect(60, 60, W - 120, H - 120);
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 4; ctx.strokeRect(68, 68, W - 136, H - 136);
+            ctx.shadowBlur = 18;
+            ctx.shadowColor = '#00e5ff'; ctx.strokeStyle = '#00e5ff'; ctx.lineWidth = 5;
+            ctx.beginPath(); ctx.moveTo(80, 52); ctx.lineTo(W - 80, 52); ctx.moveTo(80, H - 52); ctx.lineTo(W - 80, H - 52); ctx.stroke();
+            ctx.shadowColor = '#ffea00'; ctx.strokeStyle = '#ffea00';
+            ctx.beginPath(); ctx.moveTo(52, 80); ctx.lineTo(52, H - 80); ctx.moveTo(W - 52, 80); ctx.lineTo(W - 52, H - 80); ctx.stroke();
+            ctx.shadowBlur = 0;
+            // red bumper posts
+            for (let i = 140; i < W - 100; i += 240) for (const y of [60, H - 60]) { ctx.fillStyle = '#c62828'; rr(i - 14, y - 22, 28, 44, 8); ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillRect(i - 14, y - 4, 28, 8); }
+            for (let j = 140; j < H - 100; j += 240) for (const x of [60, W - 60]) { ctx.fillStyle = '#c62828'; rr(x - 22, j - 14, 44, 28, 8); ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillRect(x - 4, j - 14, 8, 28); }
+            // glowing pads
+            for (const pad of glowingPads) {
+                const pulse = 0.5 + 0.5 * Math.sin(now * 0.004 + pad.x);
+                const g = ctx.createRadialGradient(pad.x, pad.y, 4, pad.x, pad.y, pad.r * 2.4);
+                g.addColorStop(0, pad.color + 'aa'); g.addColorStop(1, pad.color + '00');
+                ctx.fillStyle = g; ctx.beginPath(); ctx.arc(pad.x, pad.y, pad.r * (2.1 + pulse * 0.3), 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(pad.x + 4, pad.y + pad.r * 0.7, pad.r, pad.r * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#263046'; ctx.beginPath(); ctx.arc(pad.x, pad.y, pad.r, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = pad.color; ctx.beginPath(); ctx.arc(pad.x, pad.y - 4, pad.r * 0.7, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.beginPath(); ctx.ellipse(pad.x - pad.r * 0.2, pad.y - pad.r * 0.35, pad.r * 0.28, pad.r * 0.16, -0.5, 0, Math.PI * 2); ctx.fill();
             }
-
-            ctx.strokeStyle = '#3949ab';
-            ctx.lineWidth = 14;
-            ctx.strokeRect(10, 10, CONFIG.worldWidth - 20, CONFIG.worldHeight - 20);
-
-            ctx.strokeStyle = '#ffeb3b';
-            ctx.lineWidth = 4;
-            ctx.strokeRect(25, 25, CONFIG.worldWidth - 50, CONFIG.worldHeight - 50);
-
-            for (let pad of glowingPads) {
-                const grad = ctx.createRadialGradient(pad.x, pad.y, 5, pad.x, pad.y, pad.r + 20);
-                grad.addColorStop(0, pad.color);
-                grad.addColorStop(1, 'rgba(0,0,0,0)');
-                ctx.beginPath();
-                ctx.arc(pad.x, pad.y, pad.r + 20, 0, Math.PI * 2);
-                ctx.fillStyle = grad;
-                ctx.fill();
-
-                ctx.beginPath();
-                ctx.arc(pad.x, pad.y, pad.r, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(10,15,25,0.7)';
-                ctx.fill();
-                ctx.strokeStyle = pad.color;
-                ctx.lineWidth = 4;
-                ctx.stroke();
+            // cartoon crowd
+            for (const spec of spectators) {
+                const bob = Math.sin(now * 0.006 + spec.bobOffset) * 4;
+                ctx.fillStyle = spec.color; ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(spec.x, spec.y + bob, spec.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.fillStyle = '#fff';
+                ctx.beginPath(); ctx.arc(spec.x - spec.r * 0.35, spec.y + bob - 2, spec.r * 0.26, 0, Math.PI * 2); ctx.arc(spec.x + spec.r * 0.35, spec.y + bob - 2, spec.r * 0.26, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#111';
+                ctx.beginPath(); ctx.arc(spec.x - spec.r * 0.35, spec.y + bob - 2, spec.r * 0.1, 0, Math.PI * 2); ctx.arc(spec.x + spec.r * 0.35, spec.y + bob - 2, spec.r * 0.1, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = spec.color; ctx.lineWidth = 4;
+                ctx.beginPath(); ctx.moveTo(spec.x - spec.r, spec.y + bob); ctx.lineTo(spec.x - spec.r - 7, spec.y + bob - 9 - bob); ctx.moveTo(spec.x + spec.r, spec.y + bob); ctx.lineTo(spec.x + spec.r + 7, spec.y + bob - 9 + bob); ctx.stroke();
             }
-
-            for (let spec of spectators) {
-                const bob = Math.sin(Date.now() * 0.005 + spec.bobOffset) * 3;
-                ctx.beginPath();
-                ctx.arc(spec.x, spec.y + bob, spec.r, 0, Math.PI * 2);
-                ctx.fillStyle = spec.color;
-                ctx.fill();
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = '#111';
-                ctx.stroke();
+            // crates
+            for (const o of obstacles) {
+                ctx.fillStyle = 'rgba(0,0,0,0.28)'; rr(o.x + 10, o.y + 22, o.w, o.h, 14); ctx.fill();
+                ctx.fillStyle = '#37474f'; rr(o.x, o.y + 14, o.w, o.h, 14); ctx.fill();
+                ctx.fillStyle = '#90a4ae'; rr(o.x, o.y, o.w, o.h, 14); ctx.fill();
+                ctx.strokeStyle = '#455a64'; ctx.lineWidth = 5; ctx.stroke();
+                ctx.strokeStyle = '#ff9800'; ctx.lineWidth = 4; ctx.setLineDash([16, 10]); rr(o.x + 12, o.y + 12, o.w - 24, o.h - 24, 8); ctx.stroke(); ctx.setLineDash([]);
             }
-
-            for (let obs of obstacles) {
-                ctx.fillStyle = '#263238';
-                ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
-                
-                ctx.fillStyle = '#37474f';
-                ctx.fillRect(obs.x + 8, obs.y + 8, obs.w - 16, obs.h - 16);
-
-                ctx.strokeStyle = '#ff9800';
-                ctx.lineWidth = 3;
-                ctx.strokeRect(obs.x + 12, obs.y + 12, obs.w - 24, obs.h - 24);
+            // danger ring around the potato holder
+            if (potatoHolder && potatoHolder.alive) {
+                const f = Math.max(0, Math.min(1, 1 - gameState.fuseTime / gameState.maxFuse));
+                const pr = 0.5 + 0.5 * Math.sin(now * (0.01 + f * 0.03));
+                ctx.beginPath(); ctx.arc(potatoHolder.x, potatoHolder.y, 95 + pr * 10, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(244,67,54,' + (0.12 + 0.22 * f) + ')'; ctx.fill();
+                ctx.strokeStyle = 'rgba(255,23,68,' + (0.5 + 0.4 * pr) + ')'; ctx.lineWidth = 6; ctx.stroke();
             }
-
             for (let t of traps) t.draw();
             for (let e of entities) e.draw();
             for (let p of projectiles) p.draw();
 
             if (potatoHolder) potatoObj.draw();
 
+            shockwaves = shockwaves.filter(s => Date.now() - s.t < 700);
+            for (const s of shockwaves) {
+                const k = (Date.now() - s.t) / 700;
+                ctx.beginPath(); ctx.arc(s.x, s.y, 40 + k * 260, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(255,' + Math.floor(200 - k * 150) + ',60,' + (1 - k) + ')';
+                ctx.lineWidth = 24 * (1 - k) + 2; ctx.stroke();
+            }
             for (let pt of particles) pt.draw();
             for (let ft of floatingTexts) ft.draw();
 
@@ -1546,6 +1609,25 @@
         }
 
         // --- ONLINE MULTIPLAYER CLIENT ---
+        let shockwaves = [];
+        function boomEffect(x, y) {
+            sound.explosion(); gameState.screenShake = 1.0;
+            shockwaves.push({ x, y, t: Date.now() });
+            for (let i = 0; i < 40; i++) {
+                particles.push(new Particle(x, y, '#ff5722', 8, 0.9));
+                particles.push(new Particle(x, y, '#ffeb3b', 6, 0.7));
+            }
+            floatingTexts.push(new FloatingText(x, y - 30, "BOOM!", "#ff3d00"));
+        }
+        function setBanner(text) {
+            let b = document.getElementById('matchBanner');
+            if (!b) {
+                b = document.createElement('div'); b.id = 'matchBanner';
+                b.style.cssText = 'position:fixed;top:110px;left:50%;transform:translateX(-50%);z-index:40;background:rgba(0,0,0,.75);color:#ffeb3b;font:900 18px sans-serif;padding:12px 22px;border-radius:14px;border:3px solid #ffeb3b;text-align:center;max-width:90vw';
+                document.body.appendChild(b);
+            }
+            b.textContent = text; b.style.display = text ? 'block' : 'none';
+        }
         function onlineStatus(message) {
             const el = document.getElementById('onlineStatus');
             if (el) el.textContent = message;
@@ -1606,7 +1688,7 @@
                     sound.init();
                     initOnlineArena();
                 }
-                if (msg.type === 'status') onlineStatus(msg.message);
+                if (msg.type === 'status') { onlineStatus(msg.message); if (!gameState.active) setBanner(msg.message); }
                 if (msg.type === 'snapshot') applyNetworkSnapshot(msg.state);
                 if (msg.type === 'event') showAnnouncement(msg.message);
                 if (msg.type === 'gameover') {
@@ -1636,7 +1718,7 @@
         }
         function applyNetworkSnapshot(state) {
             if (!state) return;
-            gameState.active = !!state.active;
+            gameState.active = !!state.active; if (state.active) setBanner('');
             gameState.round = state.round || 1;
             gameState.fuseTime = state.fuseTime ?? CONFIG.baseFuse;
             gameState.maxFuse = state.maxFuse || CONFIG.baseFuse;
@@ -1646,8 +1728,9 @@
                 let p = old.get(String(data.id));
                 if (!p) p = new Player(data.id, String(data.id) === String(networkGame.playerId), data.x, data.y, data.color || '#29b6f6', data.hat || 'cap', data.name || 'Player');
                 p.isHuman = String(data.id) === String(networkGame.playerId);
+                const wasAlive = old.has(String(data.id)) && p.alive;
                 p.x = data.x; p.y = data.y; p.vx = data.vx || 0; p.vy = data.vy || 0;
-                p.name = data.name || 'Player'; p.color = data.color || p.color; p.alive = !!data.alive;
+                p.name = data.name || 'Player'; p.color = data.color || p.color; p.alive = !!data.alive; if (wasAlive && !p.alive) boomEffect(p.x, p.y);
                 p.facingAngle = data.facingAngle || 0; p.dashCdTimer = data.dashCdTimer || 0; p.isDashing = !!data.isDashing;
                 return p;
             });
@@ -1860,6 +1943,10 @@
             initGame();
         }
 
+        document.getElementById('quickMatchBtn').addEventListener('click', () => {
+            document.getElementById('playerNameInput').blur();
+            connectOnline('quick');
+        });
         document.getElementById('hostOnlineBtn').addEventListener('click', () => {
             document.getElementById('playerNameInput').blur();
             connectOnline('create');
