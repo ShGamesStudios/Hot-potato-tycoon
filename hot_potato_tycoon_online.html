@@ -2087,15 +2087,23 @@
             initGame();
         });
 
-        document.getElementById('restartBtn').addEventListener('click', () => { if (awardsTimer) { clearInterval(awardsTimer); awardsTimer=null; } document.getElementById('awardsScreen').classList.add('hidden');
+        // The final-screen MAIN MENU button must always return home, never start a new match.
+        document.getElementById('restartBtn').addEventListener('click', () => {
+            if (awardsTimer) { clearInterval(awardsTimer); awardsTimer = null; }
+            document.getElementById('awardsScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('skinScreen').classList.add('hidden');
             setSpectatorMode(false);
-            if (networkGame.mode) {
-                if (networkGame.socket) networkGame.socket.close();
-                networkGame.mode = false; networkGame.connected = false; networkGame.playerId = null; networkGame.room = '';
-                document.getElementById('gameOverScreen').classList.add('hidden');
-                document.getElementById('hudLayer').style.display = 'none';
-                document.getElementById('menuScreen').classList.remove('hidden');
-            } else restartGame();
+            gameState.active = false;
+            if (networkGame.socket) {
+                try { networkGame.socket.close(); } catch (_) {}
+            }
+            networkGame.mode = false;
+            networkGame.connected = false;
+            networkGame.playerId = null;
+            networkGame.room = '';
+            document.getElementById('hudLayer').style.display = 'none';
+            document.getElementById('menuScreen').classList.remove('hidden');
         });
 
         function restartGame() {
