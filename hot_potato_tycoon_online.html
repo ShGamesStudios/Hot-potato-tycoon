@@ -153,6 +153,14 @@
         .btn:active {
             transform: scale(0.95);
         }
+        .skin-panel { width:min(620px,94vw); max-height:78vh; overflow:auto; padding:22px; border:3px solid #00e676; border-radius:24px; background:rgba(18,25,42,.96); box-shadow:0 0 28px rgba(0,230,118,.25); }
+        .skin-preview { width:124px; height:124px; margin:8px auto 16px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:radial-gradient(circle,#354a72,#111827); border:3px solid #80d8ff; font-size:54px; position:relative; }
+        .skin-preview .preview-case { position:absolute; right:10px; bottom:17px; font-size:25px; }
+        .skin-row { display:grid; grid-template-columns:110px 1fr; gap:12px; align-items:center; margin:12px 0; }
+        .skin-row label { color:#ffeb3b; font-weight:900; }
+        .skin-row select { width:100%; min-width:0; padding:10px; border-radius:12px; border:2px solid #80d8ff; background:#172033; color:#fff; font-weight:700; }
+        #changeSkinBtn { margin-top:18px; background:linear-gradient(135deg,#00bcd4,#1976d2); box-shadow:0 8px 24px rgba(0,188,212,.35); }
+        @media(max-width:700px){ .skin-panel{padding:14px}.skin-row{grid-template-columns:90px 1fr;gap:8px}.skin-row select{font-size:.9rem}.skin-preview{width:100px;height:100px} }
         .menu-input-group {
             margin-bottom: 20px;
             text-align: center;
@@ -266,47 +274,6 @@
         #dashBtn { background: rgba(33, 150, 243, 0.85); }
         #trapBtn { background: rgba(156, 39, 176, 0.85); }
 
-        /* Responsive layouts and more forgiving touch controls */
-        .screen-overlay { overflow-y: auto; overscroll-behavior: contain; padding: 24px 14px; }
-        .stats-box { flex-wrap: wrap; justify-content: center; }
-        button, input, .t-btn, .touch-joystick-base { touch-action: manipulation; }
-        input, textarea { user-select: text; -webkit-user-select: text; }
-        #mobileControls { pointer-events: none; }
-        .touch-joystick-base, .touch-buttons { touch-action: none; }
-        @media (max-width: 700px) {
-            h1 { font-size: clamp(2rem, 9vw, 3.2rem); letter-spacing: 1px; }
-            .subtitle { font-size: 1rem; margin-bottom: 16px; text-align: center; }
-            .btn { font-size: 1.05rem; padding: 12px 20px; border-width: 3px; margin: 6px; max-width: calc(100vw - 28px); }
-            .online-panel { width: min(100%, 440px); }
-            .menu-input-group input { width: min(280px, calc(100vw - 40px)); font-size: 1.1rem; }
-            .stats-box { gap: 8px; margin-bottom: 14px; }
-            .stat-card { padding: 8px 10px; min-width: 88px; }
-            .stat-card .stat-value { font-size: 1.25rem; }
-            .stat-card .stat-label { font-size: .68rem; }
-            .ui-layer { padding: max(8px, env(safe-area-inset-top)) 8px 8px; }
-            .hud-top { gap: 5px; align-items: flex-start; }
-            .hud-panel { padding: 6px 8px; border-width: 2px; border-radius: 10px; font-size: 10px; }
-            .hud-panel span { font-size: 15px; }
-            .hud-panel div { font-size: 9px !important; }
-            .fuse-container { width: min(42vw, 190px); padding: 7px 8px; border-width: 2px; border-radius: 10px; }
-            #hudFuseText { font-size: 10px !important; }
-            .fuse-bar-bg { height: 10px; }
-            #onlineHudStatus { font-size: 10px !important; max-width: 95vw; }
-            .touch-joystick-base { width: 116px; height: 116px; bottom: max(16px, env(safe-area-inset-bottom)); left: max(14px, env(safe-area-inset-left)); }
-            .touch-joystick-thumb { top: 27px; left: 27px; width: 56px; height: 56px; }
-            .touch-buttons { bottom: max(16px, env(safe-area-inset-bottom)); right: max(12px, env(safe-area-inset-right)); gap: 8px; align-items: flex-end; }
-            .t-btn { width: clamp(52px, 15vw, 68px); height: clamp(52px, 15vw, 68px); font-size: .72rem; border-width: 2px; }
-            #throwBtn { width: clamp(66px, 18vw, 82px) !important; height: clamp(66px, 18vw, 82px) !important; font-size: .82rem !important; }
-            #announcement { top: 24%; font-size: clamp(1.2rem, 5vw, 2rem); max-width: 90vw; }
-        }
-        @media (max-width: 390px) {
-            .touch-buttons { gap: 5px; right: 8px; }
-            .touch-joystick-base { width: 104px; height: 104px; left: 8px; }
-            .touch-joystick-thumb { top: 22px; left: 22px; width: 54px; height: 54px; }
-            .t-btn { width: 49px; height: 49px; font-size: .63rem; }
-            #throwBtn { width: 62px !important; height: 62px !important; }
-        }
-
         /* Floating announcements */
         #announcement {
             position: absolute;
@@ -323,6 +290,13 @@
             z-index: 60;
             text-align: center;
         }
+
+        .feature-panel{width:min(680px,94vw);max-height:42vh;overflow:auto;background:rgba(14,20,35,.92);border:2px solid #29b6f6;border-radius:16px;padding:12px 16px;margin:4px 0 12px;box-shadow:0 8px 22px #0008}
+        .feature-row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin:7px 0}
+        .feature-row label{font-size:.9rem;color:#ffeb3b;font-weight:800}
+        .feature-row select{max-width:44vw;padding:9px 12px;border-radius:10px;border:2px solid #ff9800;background:#111827;color:white;font-weight:700}
+        .feature-note{font-size:.78rem;color:#c7d2e3;text-align:center;margin-top:5px}
+        @media(max-width:700px){h1{font-size:clamp(1.8rem,8vw,3rem)}.subtitle{font-size:1rem;margin-bottom:10px}.screen-overlay{padding:10px;overflow:auto;justify-content:flex-start}.stats-box{gap:7px;margin:8px 0;flex-wrap:wrap}.stat-card{padding:7px 10px}.stat-card .stat-value{font-size:1.2rem}.stat-card .stat-label{font-size:.68rem}.btn{font-size:1rem;padding:10px 16px;margin:5px}.feature-panel{max-height:none;padding:9px;margin:5px 0}.feature-row select{max-width:90vw}.menu-input-group{margin-bottom:8px}.menu-input-group input{width:min(280px,85vw);font-size:1.1rem}}
     </style>
 </head>
 <body>
@@ -389,6 +363,7 @@
                 <input type="text" id="playerNameInput" value="You" maxlength="14" autocomplete="off">
             </div>
 
+
             <button class="btn" id="startBtn">PLAY OFFLINE</button>
             <div class="online-panel">
                 <div style="font-weight:900;color:#80d8ff;text-align:center">ONLINE MULTIPLAYER</div>
@@ -400,6 +375,20 @@
                 </div>
                 <button class="btn" id="copyRoomCodeBtn" type="button" hidden>COPY ROOM CODE</button>
                 <div id="onlineStatus">Create a room, then copy its code and share it with a friend.</div>
+            </div>
+            <button class="btn" id="changeSkinBtn" type="button">CHANGE SKIN</button>
+        </div>
+
+        <div class="screen-overlay hidden" id="skinScreen" style="z-index:120">
+            <div class="skin-panel">
+                <h1 style="font-size:clamp(2rem,6vw,3rem)">CUSTOMIZE SKIN</h1>
+                <div class="subtitle" style="font-size:1rem;margin-bottom:8px">MAKE YOUR TYCOON YOURS</div>
+                <div class="skin-preview" id="skinPreview" aria-label="Character skin preview"><span id="previewHat">🧢</span><span class="preview-case" id="previewCase">💼</span></div>
+                <div class="skin-row"><label for="hatSelect">HAT</label><select id="hatSelect"></select></div>
+                <div class="skin-row"><label for="suitSelect">SUIT</label><select id="suitSelect"></select></div>
+                <div class="skin-row"><label for="briefcaseSelect">BRIEFCASE</label><select id="briefcaseSelect"></select></div>
+                <div class="feature-note" id="unlockHint" style="text-align:center;color:#b8c7df">Play matches and win rounds to unlock more looks. Cosmetics never change speed or hitboxes.</div>
+                <button class="btn" id="finaliseSkinBtn" type="button">FINALISE SKIN</button>
             </div>
         </div>
 
@@ -569,39 +558,63 @@
             playerName: "You"
         };
 
-        // Session stats: they update during this visit and reset when the site is closed.
-        let playerStats = { matchesPlayed: 0, wins: 0, bestRound: 1 };
-        let currentMatchRecorded = false;
+        // Persistent Career Stats
+        let playerStats = {
+            matchesPlayed: 0,
+            wins: 0,
+            bestRound: 1
+        };
+
         function loadStats() {
             try {
-                const saved = JSON.parse(sessionStorage.getItem('hot_potato_stats_session') || 'null');
-                if (saved && Number.isFinite(saved.matchesPlayed) && Number.isFinite(saved.wins) && Number.isFinite(saved.bestRound)) {
-                    playerStats = {
-                        matchesPlayed: Math.max(0, Math.floor(saved.matchesPlayed)),
-                        wins: Math.max(0, Math.floor(saved.wins)),
-                        bestRound: Math.max(1, Math.floor(saved.bestRound))
-                    };
+                const saved = localStorage.getItem('hot_potato_stats');
+                if (saved) {
+                    playerStats = JSON.parse(saved);
                 }
-            } catch (_) { /* Keep in-memory defaults if session storage is unavailable. */ }
+            } catch(e) {}
             updateStatsUI();
         }
+
         function saveStats() {
-            try { sessionStorage.setItem('hot_potato_stats_session', JSON.stringify(playerStats)); } catch (_) {}
+            try {
+                localStorage.setItem('hot_potato_stats', JSON.stringify(playerStats));
+            } catch(e) {}
             updateStatsUI();
+            if (typeof refreshCosmeticsUI === 'function') refreshCosmeticsUI();
         }
+
         function updateStatsUI() {
             document.getElementById('statMatchesPlayed').innerText = playerStats.matchesPlayed;
             document.getElementById('statWins').innerText = playerStats.wins;
             document.getElementById('statBestRound').innerText = playerStats.bestRound;
         }
-        function recordMatch(isWinner) {
-            if (currentMatchRecorded) return;
-            currentMatchRecorded = true;
-            playerStats.matchesPlayed++;
-            if (isWinner) playerStats.wins++;
-            playerStats.bestRound = Math.max(playerStats.bestRound, gameState.round || 1);
-            saveStats();
+
+        const MAPS = {
+            original: {name:'Original Arena', floor:'#303a6b', tile1:'#8f9bb8', tile2:'#838fad', obstacle:'#90a4ae', conveyors:[], portals:[]},
+            jungle: {name:'Jungle Mayhem', floor:'#244c36', tile1:'#4d8b47', tile2:'#39753d', obstacle:'#80552f', conveyors:[{x:650,y:650,w:320,h:70,dx:1,dy:0},{x:1430,y:1080,w:320,h:70,dx:-1,dy:0}], portals:[{x:350,y:900},{x:2050,y:900}]},
+            skyship: {name:'Skyship Showdown', floor:'#24405e', tile1:'#47718e', tile2:'#345a78', obstacle:'#9a7047', conveyors:[{x:760,y:500,w:380,h:70,dx:1,dy:0},{x:1260,y:1230,w:380,h:70,dx:-1,dy:0}], portals:[{x:500,y:500},{x:1900,y:1300}]},
+            ice: {name:'Ice Mountain', floor:'#b7e4f5', tile1:'#e2f7ff', tile2:'#b8e5f4', obstacle:'#76a9c5', conveyors:[{x:500,y:1200,w:360,h:70,dx:0,dy:-1},{x:1540,y:520,w:360,h:70,dx:0,dy:1}], portals:[{x:450,y:450},{x:1950,y:1350}]}
+        };
+        let currentMap = 'original';
+        const MAP_KEYS = Object.keys(MAPS);
+        function pickRandomMap(){ return MAP_KEYS[Math.floor(Math.random()*MAP_KEYS.length)]; }
+        const cosmeticCatalog = {
+            hats:[{id:'cap',label:'Blue Cap',need:0},{id:'tophat',label:'Top Hat',need:0},{id:'cowboy',label:'Cowboy Hat',need:2},{id:'crown',label:'Golden Crown',need:5},{id:'leaf',label:'Jungle Leaves',need:3},{id:'icehelm',label:'Ice Helmet',need:6}],
+            suits:[{id:'classic',label:'Classic Suit',need:0},{id:'business',label:'Business Suit',need:2},{id:'jungle',label:'Jungle Explorer',need:3},{id:'captain',label:'Skyship Captain',need:5},{id:'ice',label:'Ice Suit',need:6}],
+            briefcases:[{id:'classic',label:'Classic Briefcase',need:0},{id:'gold',label:'Gold Briefcase',need:2},{id:'neon',label:'Neon Briefcase',need:3},{id:'jungle',label:'Jungle Crate',need:4},{id:'ice',label:'Icy Briefcase',need:6}]
+        };
+        let equippedCosmetics = {hat:'cap',suit:'classic',briefcase:'classic'};
+        function loadCosmetics(){try{const v=JSON.parse(localStorage.getItem('hot_potato_cosmetics')||'{}');equippedCosmetics={...equippedCosmetics,...v};}catch(e){} refreshCosmeticsUI();}
+        function cosmeticUnlocked(item){return playerStats.matchesPlayed>=item.need || playerStats.wins>=item.need;}
+        function refreshCosmeticsUI(){
+            const configs=[['hatSelect','hats','hat'],['suitSelect','suits','suit'],['briefcaseSelect','briefcases','briefcase']];
+            for(const [id,key,prop] of configs){const el=document.getElementById(id);if(!el)continue;el.innerHTML='';for(const item of cosmeticCatalog[key]){const o=document.createElement('option');o.value=item.id;o.textContent=(cosmeticUnlocked(item)?'':'🔒 ')+item.label+(cosmeticUnlocked(item)?'':` — ${item.need} matches/wins`);o.disabled=!cosmeticUnlocked(item);el.appendChild(o);}if(!cosmeticUnlocked(cosmeticCatalog[key].find(x=>x.id===equippedCosmetics[prop])||cosmeticCatalog[key][0]))equippedCosmetics[prop]=cosmeticCatalog[key][0].id;el.value=equippedCosmetics[prop];}
+            const hint=document.getElementById('unlockHint');if(hint)hint.textContent=`Unlocked by matches/wins: ${playerStats.matchesPlayed} matches · ${playerStats.wins} wins. Cosmetics never change speed or hitboxes.`;
+            updateSkinPreview();
         }
+        function saveCosmetics(){try{localStorage.setItem('hot_potato_cosmetics',JSON.stringify(equippedCosmetics));}catch(e){} refreshCosmeticsUI();}
+        function readCosmeticsUI(){equippedCosmetics.hat=document.getElementById('hatSelect').value;equippedCosmetics.suit=document.getElementById('suitSelect').value;equippedCosmetics.briefcase=document.getElementById('briefcaseSelect').value;updateSkinPreview();}
+        function updateSkinPreview(){const hats={cap:'🧢',tophat:'🎩',cowboy:'🤠',crown:'👑',leaf:'🌿',icehelm:'🪖'};const cases={classic:'💼',gold:'🧳',neon:'🟦',jungle:'📦',ice:'🧊'};const h=document.getElementById('previewHat'),c=document.getElementById('previewCase'),p=document.getElementById('skinPreview');if(h)h.textContent=hats[equippedCosmetics.hat]||'🧢';if(c)c.textContent=cases[equippedCosmetics.briefcase]||'💼';if(p){const suits={classic:'#f5f5f5',business:'#263238',jungle:'#558b2f',captain:'#1565c0',ice:'#b3e5fc'};p.style.background=`radial-gradient(circle,${suits[equippedCosmetics.suit]||'#354a72'},#111827)`;}}
 
         let entities = [];
         let obstacles = [];
@@ -618,11 +631,10 @@
         const justPressed = { space: false, shift: false, e: false, r: false };
         
         let mouse = { x: 0, y: 0, worldX: 0, worldY: 0, down: false };
-        let touchAimSet = false;
         let mobileInputs = { throw: false, dash: false, trap: false };
 
         let announcementTimer = null;
-        let networkGame = { socket: null, connected: false, room: '', playerId: null, mode: false, lastInputSent: 0, pendingAction: null, projectileView: null };
+        let networkGame = { socket: null, connected: false, room: '', playerId: null, mode: false, lastInputSent: 0, pendingAction: null, projectileView: null, statsRecorded: false };
 
         const marketQuotes = [
             "\"Buy high, explode low! Absolutely catastrophic portfolio management.\"",
@@ -670,6 +682,8 @@
                 this.color = color;
                 this.hat = hat;
                 this.name = name;
+                this.suit = isHuman ? equippedCosmetics.suit : 'classic';
+                this.briefcase = isHuman ? equippedCosmetics.briefcase : 'classic';
                 this.alive = true;
                 this.dashTimer = 0;
                 this.dashCdTimer = 0;
@@ -748,7 +762,7 @@
 
                 this.isTrapped = false;
                 for (let trap of traps) {
-                    if (trap.owner !== this && dist(this.x, this.y, trap.x, trap.y) < trap.radius) {
+                    if (dist(this.x, this.y, trap.x, trap.y) < trap.radius) {
                         targetVx *= 0.35;
                         targetVy *= 0.35;
                         this.isTrapped = true;
@@ -933,6 +947,15 @@
                 ctx.strokeStyle = '#1a1a1a';
                 ctx.stroke();
 
+                // Equipped suit overlay (cosmetic only; hitbox and movement stay unchanged).
+                if (this.suit && this.suit !== 'classic') {
+                    const suitColors = {business:'#263238',jungle:'#2e7d32',captain:'#1565c0',ice:'#b3e5fc'};
+                    ctx.fillStyle = suitColors[this.suit] || '#263238';
+                    ctx.fillRect(-this.radius*0.48, -this.radius*0.08 + bob, this.radius*0.75, this.radius*0.78);
+                    ctx.fillStyle = '#fff'; ctx.fillRect(-this.radius*0.08, this.radius*0.05 + bob, 4, this.radius*0.48);
+                    if (this.suit === 'captain') { ctx.fillStyle='#ffeb3b'; ctx.fillRect(-this.radius*0.4, this.radius*0.35+bob, this.radius*0.6, 3); }
+                }
+
                 // Facing arrow and cartoon eyes.
                 ctx.save();
                 ctx.rotate(this.facingAngle);
@@ -1004,6 +1027,10 @@
                     ctx.arc(0, -this.radius - 4, 12, Math.PI, 0, false);
                     ctx.fill();
                     ctx.fillRect(0, -this.radius - 6, 14, 4);
+                } else if (this.hat === 'leaf') {
+                    ctx.fillStyle = '#43a047'; ctx.beginPath(); ctx.ellipse(-6,-this.radius-10,10,5,-0.6,0,Math.PI*2); ctx.ellipse(6,-this.radius-13,10,5,0.6,0,Math.PI*2); ctx.fill();
+                } else if (this.hat === 'icehelm') {
+                    ctx.fillStyle = '#b3e5fc'; ctx.beginPath(); ctx.arc(0,-this.radius-5,13,Math.PI,0); ctx.fill(); ctx.fillRect(-13,-this.radius-6,26,7); ctx.strokeStyle='#fff'; ctx.stroke();
                 }
 
                 // Nameplate is drawn in the same world-space transform as the player.
@@ -1260,9 +1287,25 @@
             }
         }
 
+
+        function mapMechanics(){return MAPS[currentMap]||MAPS.original;}
+        function applyOfflineMapMechanics(dt){
+            const m=mapMechanics();
+            for(const p of entities){if(!p.alive)continue;
+                for(const belt of m.conveyors){if(p.x>=belt.x&&p.x<=belt.x+belt.w&&p.y>=belt.y&&p.y<=belt.y+belt.h){p.x+=belt.dx*190*dt;p.y+=belt.dy*190*dt;}}
+                if(!p.portalCooldown)p.portalCooldown=0;else p.portalCooldown=Math.max(0,p.portalCooldown-dt);
+                if(p.portalCooldown<=0){const entry=m.portals.find(q=>Math.hypot(p.x-q.x,p.y-q.y)<42);if(entry){const exit=m.portals.find(q=>q!==entry);if(exit){p.x=exit.x+(p.x-entry.x);p.y=exit.y+(p.y-entry.y);p.portalCooldown=1.1;showAnnouncement('PORTAL WARP!');}}}
+            }
+        }
+        function drawMapMechanics(){
+            const m=mapMechanics();
+            for(const b of m.conveyors){ctx.fillStyle='#263238';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.strokeStyle='#ffeb3b';ctx.lineWidth=4;ctx.strokeRect(b.x,b.y,b.w,b.h);ctx.fillStyle='#ffeb3b';for(let x=b.x+24;x<b.x+b.w-10;x+=52){ctx.beginPath();if(b.dx>0){ctx.moveTo(x,b.y+18);ctx.lineTo(x+20,b.y+b.h/2);ctx.lineTo(x,b.y+b.h-18);}else if(b.dx<0){ctx.moveTo(x+20,b.y+18);ctx.lineTo(x,b.y+b.h/2);ctx.lineTo(x+20,b.y+b.h-18);}else if(b.dy<0){ctx.moveTo(b.x+b.w/2,b.y+8);ctx.lineTo(b.x+b.w/2-18,b.y+28);ctx.lineTo(b.x+b.w/2+18,b.y+28);}else{ctx.moveTo(b.x+b.w/2,b.y+b.h-8);ctx.lineTo(b.x+b.w/2-18,b.y+b.h-28);ctx.lineTo(b.x+b.w/2+18,b.y+b.h-28);}ctx.closePath();ctx.fill();if(b.dy!==0)break;}}
+            for(let i=0;i<m.portals.length;i++){const p=m.portals[i];ctx.save();ctx.shadowBlur=24;ctx.shadowColor=i?'#29b6f6':'#e040fb';ctx.strokeStyle=i?'#29b6f6':'#e040fb';ctx.lineWidth=9;ctx.beginPath();ctx.ellipse(p.x,p.y,34,46,0,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=.45;ctx.fillStyle=i?'#29b6f6':'#e040fb';ctx.beginPath();ctx.ellipse(p.x,p.y,26,38,0,0,Math.PI*2);ctx.fill();ctx.restore();}
+        }
+
         // --- GAME INITIALIZATION & LOOPS ---
         function initGame() {
-            currentMatchRecorded = false;
+            currentMap = pickRandomMap();
             entities = [];
             obstacles = [];
             projectiles = [];
@@ -1316,17 +1359,17 @@
         }
 
         function spawnObstacles() {
-            obstacles = [
-                { x: 450, y: 320, w: 220, h: 100 },
-                { x: 1730, y: 320, w: 220, h: 100 },
-                { x: 450, y: 1380, w: 220, h: 100 },
-                { x: 1730, y: 1380, w: 220, h: 100 },
-                { x: 1050, y: 320, w: 300, h: 120 },
-                { x: 1050, y: 1360, w: 300, h: 120 },
-                { x: 280, y: 800, w: 120, h: 280 },
-                { x: 2000, y: 800, w: 120, h: 280 },
+            const base = [
+                { x: 450, y: 320, w: 220, h: 100 }, { x: 1730, y: 320, w: 220, h: 100 },
+                { x: 450, y: 1380, w: 220, h: 100 }, { x: 1730, y: 1380, w: 220, h: 100 },
+                { x: 1050, y: 320, w: 300, h: 120 }, { x: 1050, y: 1360, w: 300, h: 120 },
+                { x: 280, y: 800, w: 120, h: 280 }, { x: 2000, y: 800, w: 120, h: 280 },
                 { x: 1080, y: 820, w: 240, h: 160 }
             ];
+            const extra = currentMap === 'jungle' ? [{x:800,y:300,w:150,h:220},{x:1460,y:1280,w:160,h:180},{x:1020,y:650,w:130,h:100}] :
+                currentMap === 'skyship' ? [{x:760,y:760,w:140,h:240},{x:1500,y:760,w:140,h:240},{x:1000,y:1080,w:400,h:70}] :
+                currentMap === 'ice' ? [{x:750,y:500,w:180,h:120},{x:1470,y:1180,w:180,h:120},{x:1000,y:700,w:100,h:180}] : [];
+            obstacles = currentMap === 'original' ? base : base.slice(0,5).concat(extra);
         }
 
         function spawnEntities() {
@@ -1383,7 +1426,7 @@
                 const isHuman = (i === 15);
                 const name = isHuman ? gameState.playerName : names[i];
                 const color = colors[i % colors.length];
-                const hat = hats[i % hats.length];
+                const hat = isHuman ? equippedCosmetics.hat : hats[i % hats.length];
 
                 entities.push(new Player(i, isHuman, x, y, color, hat, name));
             }
@@ -1428,6 +1471,7 @@
             }
 
             for (let e of entities) e.update(dt);
+            applyOfflineMapMechanics(dt);
             for (let p of projectiles) p.update(dt);
             projectiles = projectiles.filter(p => p.active);
 
@@ -1453,23 +1497,20 @@
             if (living.length <= 1) endGame(living[0]);
 
             if (justPressed.space && potatoHolder && potatoHolder.isHuman) throwPotatoAt(mouse.worldX, mouse.worldY);
-            if (mobileInputs.throw) {
+            if (mobileInputs.throw && potatoHolder && potatoHolder.isHuman) {
                 mobileInputs.throw = false;
-                if (potatoHolder && potatoHolder.isHuman) {
-                    const tx = potatoHolder.x + Math.cos(potatoHolder.facingAngle) * 420;
-                    const ty = potatoHolder.y + Math.sin(potatoHolder.facingAngle) * 420;
-                    throwPotatoAt(tx, ty);
-                }
+                const tx = potatoHolder.x + Math.cos(potatoHolder.facingAngle) * 300;
+                const ty = potatoHolder.y + Math.sin(potatoHolder.facingAngle) * 300;
+                throwPotatoAt(tx, ty);
             }
             if (justPressed.e && potatoHolder && potatoHolder.isHuman) dropTrap(potatoHolder);
-            if (mobileInputs.trap) {
+            if (mobileInputs.trap && potatoHolder && potatoHolder.isHuman) {
                 mobileInputs.trap = false;
-                if (potatoHolder && potatoHolder.isHuman) dropTrap(potatoHolder);
+                dropTrap(potatoHolder);
             }
-            if (mobileInputs.dash) {
+            if (mobileInputs.dash && potatoHolder && potatoHolder.isHuman) {
                 mobileInputs.dash = false;
-                const humanPlayer = entities.find(p => p.isHuman && p.alive);
-                if (humanPlayer && humanPlayer.dashCdTimer <= 0) humanPlayer.triggerDash();
+                if (potatoHolder.dashCdTimer <= 0) potatoHolder.triggerDash();
             }
 
             for (let k in justPressed) justPressed[k] = false;
@@ -1501,7 +1542,13 @@
             gameState.active = false;
             const isWinner = winner && winner.isHuman;
 
-            recordMatch(!!isWinner);
+            playerStats.matchesPlayed++;
+            if (isWinner) {
+                playerStats.wins++;
+            }
+            if (gameState.round > playerStats.bestRound) {
+                playerStats.bestRound = gameState.round;
+            }
             saveStats();
 
             document.getElementById('endStatRound').innerText = gameState.round;
@@ -1544,12 +1591,12 @@
             const W = CONFIG.worldWidth, H = CONFIG.worldHeight, now = Date.now();
             const rr = (x, y, w, h, r) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); };
             // stands
-            ctx.fillStyle = '#232842'; ctx.fillRect(0, 0, W, H);
+            ctx.fillStyle = mapMechanics().floor; ctx.fillRect(0, 0, W, H);
             ctx.fillStyle = '#303a6b';
             ctx.fillRect(0, 0, W, 70); ctx.fillRect(0, H - 70, W, 70); ctx.fillRect(0, 0, 70, H); ctx.fillRect(W - 70, 0, 70, H);
             // checkered floor
             for (let x = 60; x < W - 60; x += 100) for (let y = 60; y < H - 60; y += 100) {
-                ctx.fillStyle = ((x / 100 + y / 100) % 2 === 0) ? '#8f9bb8' : '#838fad';
+                ctx.fillStyle = ((x / 100 + y / 100) % 2 === 0) ? mapMechanics().tile1 : mapMechanics().tile2;
                 ctx.fillRect(x, y, Math.min(100, W - 60 - x), Math.min(100, H - 60 - y));
             }
             // rim + neon lights
@@ -1590,11 +1637,12 @@
             // crates
             for (const o of obstacles) {
                 ctx.fillStyle = 'rgba(0,0,0,0.28)'; rr(o.x + 10, o.y + 22, o.w, o.h, 14); ctx.fill();
-                ctx.fillStyle = '#37474f'; rr(o.x, o.y + 14, o.w, o.h, 14); ctx.fill();
-                ctx.fillStyle = '#90a4ae'; rr(o.x, o.y, o.w, o.h, 14); ctx.fill();
+                ctx.fillStyle = mapMechanics().obstacle; rr(o.x, o.y + 14, o.w, o.h, 14); ctx.fill();
+                ctx.fillStyle = currentMap === 'ice' ? '#e1f5fe' : currentMap === 'jungle' ? '#a5d6a7' : currentMap === 'skyship' ? '#bcaaa4' : '#90a4ae'; rr(o.x, o.y, o.w, o.h, 14); ctx.fill();
                 ctx.strokeStyle = '#455a64'; ctx.lineWidth = 5; ctx.stroke();
                 ctx.strokeStyle = '#ff9800'; ctx.lineWidth = 4; ctx.setLineDash([16, 10]); rr(o.x + 12, o.y + 12, o.w - 24, o.h - 24, 8); ctx.stroke(); ctx.setLineDash([]);
             }
+            drawMapMechanics();
             // danger ring around the potato holder
             if (potatoHolder && potatoHolder.alive) {
                 const f = Math.max(0, Math.min(1, 1 - gameState.fuseTime / gameState.maxFuse));
@@ -1607,7 +1655,11 @@
             for (let e of entities) e.draw();
             for (let p of projectiles) p.draw();
 
-            if (potatoHolder) potatoObj.draw();
+            if (potatoHolder) {
+                potatoObj.draw();
+                const skin = potatoHolder.briefcase || (potatoHolder.isHuman ? equippedCosmetics.briefcase : 'classic');
+                if (skin && skin !== 'classic') { ctx.save(); ctx.translate(potatoHolder.x+27,potatoHolder.y+17); ctx.fillStyle=({gold:'#ffd54f',neon:'#00e5ff',jungle:'#795548',ice:'#b3e5fc'})[skin]||'#ffd54f'; ctx.strokeStyle='#17202a'; ctx.lineWidth=3; ctx.fillRect(-10,-8,20,16); ctx.strokeRect(-10,-8,20,16); ctx.strokeStyle='#fff'; ctx.beginPath();ctx.moveTo(-4,-8);ctx.lineTo(-4,8);ctx.stroke();ctx.restore(); }
+            }
 
             shockwaves = shockwaves.filter(s => Date.now() - s.t < 700);
             for (const s of shockwaves) {
@@ -1649,13 +1701,11 @@
             update(dt);
             render();
 
-            loadStats();
-        requestAnimationFrame(gameLoop);
+            requestAnimationFrame(gameLoop);
         }
 
         // --- ONLINE MULTIPLAYER CLIENT ---
         let shockwaves = [];
-        let onlineCountdownMessage = '';
         function boomEffect(x, y) {
             sound.explosion(); gameState.screenShake = 1.0;
             shockwaves.push({ x, y, t: Date.now() });
@@ -1716,19 +1766,18 @@
             catch (err) { onlineStatus('Could not connect. Start the server first.'); return; }
             networkGame.socket = ws;
             ws.addEventListener('open', () => {
-                ws.send(JSON.stringify({ type: action, name, room }));
+                readCosmeticsUI(); ws.send(JSON.stringify({ type: action, name, room, cosmetics: equippedCosmetics }));
             });
             ws.addEventListener('message', ev => {
                 let msg; try { msg = JSON.parse(ev.data); } catch (_) { return; }
                 if (msg.type === 'error') { onlineStatus(msg.message || 'Online error'); return; }
                 if (msg.type === 'joined') {
-                    networkGame.connected = true; networkGame.mode = true;
+                    networkGame.connected = true; networkGame.mode = true; networkGame.statsRecorded = false;
                     networkGame.playerId = msg.playerId; networkGame.room = msg.room;
                     document.getElementById('roomCodeInput').value = msg.room;
                     document.getElementById('copyRoomCodeBtn').hidden = false;
                     document.getElementById('copyRoomCodeBtn').textContent = 'COPY ROOM CODE';
-                    currentMatchRecorded = false;
-                    onlineStatus('Room ' + msg.room + ' created/joined — copy the code to invite friends. The 60-second countdown begins when player 2 joins.');
+                    onlineStatus('Room ' + msg.room + ' created/joined — copy the code to invite a friend. Waiting for another player…');
                     document.getElementById('menuScreen').classList.add('hidden');
                     document.getElementById('hudLayer').style.display = 'flex';
                     document.getElementById('gameOverScreen').classList.add('hidden');
@@ -1740,8 +1789,13 @@
                 if (msg.type === 'event') showAnnouncement(msg.message);
                 if (msg.type === 'gameover') {
                     gameState.active = false;
-                    recordMatch(String(msg.winnerId) === String(networkGame.playerId));
-                    updateStatsUI();
+                    if (!networkGame.statsRecorded) {
+                        networkGame.statsRecorded = true;
+                        playerStats.matchesPlayed++;
+                        if (String(msg.winnerId) === String(networkGame.playerId)) playerStats.wins++;
+                        if (gameState.round > playerStats.bestRound) playerStats.bestRound = gameState.round;
+                        saveStats();
+                    }
                     document.getElementById('gameOverScreen').classList.remove('hidden');
                     document.getElementById('gameOverTitle').textContent = msg.winnerId === networkGame.playerId ? 'ONLINE VICTORY!' : 'MARKET CRASH!';
                     document.getElementById('gameOverSubtitle').textContent = msg.winnerId === networkGame.playerId ? 'You are the last tycoon standing!' : 'Another player survived the chaos.';
@@ -1759,7 +1813,6 @@
             ws.addEventListener('error', () => onlineStatus('Server connection failed. Run the included server and try again.'));
         }
         function initOnlineArena() {
-            currentMatchRecorded = false;
             entities = []; projectiles = []; traps = []; particles = []; floatingTexts = [];
             spectators = []; glowingPads = [];
             gameState.round = 1; gameState.survivors = 0; gameState.fuseTime = CONFIG.baseFuse;
@@ -1768,6 +1821,7 @@
         }
         function applyNetworkSnapshot(state) {
             if (!state) return;
+            if (state.map && state.map !== currentMap) { currentMap = state.map; spawnObstacles(); }
             gameState.active = !!state.active; if (state.active) setBanner('');
             gameState.round = state.round || 1;
             gameState.fuseTime = state.fuseTime ?? CONFIG.baseFuse;
@@ -1780,16 +1834,12 @@
                 p.isHuman = String(data.id) === String(networkGame.playerId);
                 const wasAlive = old.has(String(data.id)) && p.alive;
                 p.x = data.x; p.y = data.y; p.vx = data.vx || 0; p.vy = data.vy || 0;
-                p.name = data.name || 'Player'; p.color = data.color || p.color; p.alive = !!data.alive; if (wasAlive && !p.alive) boomEffect(p.x, p.y);
+                p.name = data.name || 'Player'; p.color = data.color || p.color; p.hat = data.hat || p.hat; p.suit = data.suit || p.suit; p.briefcase = data.briefcase || p.briefcase; p.isTrapped = (data.trappedTimer||0)>0; p.alive = !!data.alive; if (wasAlive && !p.alive) boomEffect(p.x, p.y);
                 p.facingAngle = data.facingAngle || 0; p.dashCdTimer = data.dashCdTimer || 0; p.isDashing = !!data.isDashing;
                 return p;
             });
             potatoHolder = entities.find(p => String(p.id) === String(state.holderId)) || null;
-            traps = (state.traps || []).map(data => {
-                const t = new Trap(data.x, data.y, null);
-                t.radius = data.radius || 38; t.life = data.life || 0;
-                return t;
-            });
+            if (networkGame.mode && Array.isArray(state.traps)) traps = state.traps.map(t => ({x:t.x,y:t.y,radius:t.radius||38,life:t.life||1,draw:Trap.prototype.draw}));
             if (state.projectile) {
                 const q = state.projectile;
                 networkGame.projectileView = { x:q.x, y:q.y, draw(){ ctx.save(); ctx.fillStyle='#ff9800'; ctx.strokeStyle='#3e2723'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(this.x,this.y,14,0,Math.PI*2); ctx.fill(); ctx.stroke(); ctx.restore(); } };
@@ -1801,14 +1851,12 @@
             if (!gameState.active) return;
             const now = performance.now();
             const human = entities.find(p => p.isHuman);
-            if (human && (!isTouchDevice || touchAimSet)) updateMouseWorldCoordinates();
+            if (human) updateMouseWorldCoordinates();
             if (now - networkGame.lastInputSent > 40) {
                 networkGame.lastInputSent = now;
-                const aimX = (isTouchDevice && human && !touchAimSet) ? human.x + Math.cos(human.facingAngle) * 420 : mouse.worldX;
-                const aimY = (isTouchDevice && human && !touchAimSet) ? human.y + Math.sin(human.facingAngle) * 420 : mouse.worldY;
                 networkGame.socket.send(JSON.stringify({ type:'input', input:{
                     up:!!(keys.w||keys.arrowUp), down:!!(keys.s||keys.arrowDown), left:!!(keys.a||keys.arrowLeft), right:!!(keys.d||keys.arrowRight),
-                    aimX, aimY, dash:!!(justPressed.shift || mobileInputs.dash),
+                    aimX:mouse.worldX, aimY:mouse.worldY, dash:!!(justPressed.shift || mobileInputs.dash),
                     throw:!!(justPressed.space || mobileInputs.throw || mouse.down),
                     trap:!!(justPressed.e || mobileInputs.trap)
                 }}));
@@ -1881,27 +1929,8 @@
             mouse.down = false;
         });
 
-        // On phones/tablets, tap or drag the open arena to aim; the joystick and action
-        // buttons remain independently usable with other fingers.
-        function updateTouchAim(touch) {
-            mouse.x = touch.clientX;
-            mouse.y = touch.clientY;
-            touchAimSet = true;
-            updateMouseWorldCoordinates();
-        }
-        canvas.addEventListener('touchstart', (e) => {
-            if (e.changedTouches.length) updateTouchAim(e.changedTouches[0]);
-            if (e.cancelable) e.preventDefault();
-        }, { passive: false });
-        canvas.addEventListener('touchmove', (e) => {
-            if (e.changedTouches.length) updateTouchAim(e.changedTouches[0]);
-            if (e.cancelable) e.preventDefault();
-        }, { passive: false });
-
         const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-        if (isTouchDevice) {
-            document.getElementById('mobileControls').style.display = 'block';
-        }
+        if (isTouchDevice || window.matchMedia('(max-width: 850px)').matches) { document.getElementById('mobileControls').style.display = 'block'; }
 
         const joystickBase = document.getElementById('joystickBase');
         const joystickThumb = document.getElementById('joystickThumb');
@@ -1928,7 +1957,7 @@
             e.preventDefault();
         });
 
-        function releaseJoystick(e) {
+        joystickBase.addEventListener('touchend', (e) => {
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const touch = e.changedTouches[i];
                 if (touch.identifier === joystickTouchId) {
@@ -1937,10 +1966,8 @@
                     keys.w = false; keys.s = false; keys.a = false; keys.d = false;
                 }
             }
-            if (e.cancelable) e.preventDefault();
-        }
-        joystickBase.addEventListener('touchend', releaseJoystick, { passive: false });
-        joystickBase.addEventListener('touchcancel', releaseJoystick, { passive: false });
+            e.preventDefault();
+        });
 
         function handleJoystick(x, y) {
             const dx = x - joystickCenter.x;
@@ -1960,23 +1987,23 @@
             keys.d = dx > 15;
         }
 
-        function bindTouchAction(id, action) {
-            const el = document.getElementById(id);
-            const activate = (e) => {
-                sound.init();
-                mobileInputs[action] = true;
-                if (e.cancelable) e.preventDefault();
-            };
-            el.addEventListener('touchstart', activate, { passive: false });
-            el.addEventListener('pointerdown', (e) => {
-                if (e.pointerType === 'mouse') return;
-                activate(e);
-            });
-            el.addEventListener('contextmenu', e => e.preventDefault());
-        }
-        bindTouchAction('throwBtn', 'throw');
-        bindTouchAction('dashBtn', 'dash');
-        bindTouchAction('trapBtn', 'trap');
+        document.getElementById('throwBtn').addEventListener('pointerdown', (e) => {
+            sound.init();
+            mobileInputs.throw = true;
+            e.preventDefault();
+        });
+
+        document.getElementById('dashBtn').addEventListener('pointerdown', (e) => {
+            sound.init();
+            mobileInputs.dash = true;
+            e.preventDefault();
+        });
+
+        document.getElementById('trapBtn').addEventListener('pointerdown', (e) => {
+            sound.init();
+            mobileInputs.trap = true;
+            e.preventDefault();
+        });
 
         document.getElementById('playerNameInput').addEventListener('keydown', (e) => {
             // Name entry is committed only by clicking PLAY MATCH.
@@ -2000,18 +2027,13 @@
         });
 
         document.getElementById('restartBtn').addEventListener('click', () => {
-            if (networkGame.socket) { try { networkGame.socket.close(); } catch (_) {} }
-            networkGame.mode = false; networkGame.connected = false; networkGame.playerId = null; networkGame.room = '';
-            for (const k of Object.keys(keys)) keys[k] = false;
-            for (const k of Object.keys(mobileInputs)) mobileInputs[k] = false;
-            mouse.down = false; justPressed.space = false; justPressed.shift = false; justPressed.e = false;
-            document.getElementById('gameOverScreen').classList.add('hidden');
-            document.getElementById('hudLayer').style.display = 'none';
-            document.getElementById('menuScreen').classList.remove('hidden');
-            document.getElementById('copyRoomCodeBtn').hidden = true;
-            document.getElementById('onlineStatus').textContent = 'Create a room, then copy its code and share it with a friend.';
-            updateStatsUI();
-            setBanner('');
+            if (networkGame.mode) {
+                if (networkGame.socket) networkGame.socket.close();
+                networkGame.mode = false; networkGame.connected = false; networkGame.playerId = null; networkGame.room = '';
+                document.getElementById('gameOverScreen').classList.add('hidden');
+                document.getElementById('hudLayer').style.display = 'none';
+                document.getElementById('menuScreen').classList.remove('hidden');
+            } else restartGame();
         });
 
         function restartGame() {
@@ -2038,6 +2060,11 @@
             if (!code) { onlineStatus('Enter a room code to join, or click CREATE ROOM.'); return; }
             connectOnline('join');
         });
+        for (const id of ['hatSelect','suitSelect','briefcaseSelect']) document.getElementById(id).addEventListener('change', readCosmeticsUI);
+        document.getElementById('changeSkinBtn').addEventListener('click', () => { readCosmeticsUI(); document.getElementById('menuScreen').classList.add('hidden'); document.getElementById('skinScreen').classList.remove('hidden'); });
+        document.getElementById('finaliseSkinBtn').addEventListener('click', () => { readCosmeticsUI(); saveCosmetics(); document.getElementById('skinScreen').classList.add('hidden'); document.getElementById('menuScreen').classList.remove('hidden'); });
+        loadStats();
+        loadCosmetics();
         requestAnimationFrame(gameLoop);
     </script>
 </body>
