@@ -5,8 +5,8 @@ const crypto = require('crypto');
 const WebSocket = require('ws');
 
 const PORT = Number(process.env.PORT || 8080);
-const GAME_FILE = path.join(__dirname, 'hot_potato_tycoon_online.html');
-const CONFIG = { width: 2400, height: 1800, radius: 24, speed: 280, dashSpeed: 750, dashDuration: 0.16, dashCooldown: 2, throwSpeed: 950, fuse: 12 };
+const GAME_FILE = path.join(__dirname, 'hot_potato_tycoon_online(1).html');
+const CONFIG = { width: 2400, height: 1800, radius: 24, speed: 280, dashSpeed: 750, dashDuration: 0.16, dashCooldown: 2, throwSpeed: 950, fuse: 12, trapCooldown: 6, trapLife: 12, trapRadius: 38, trapSlowTime: 1.5 };
 const obstacles = [
   {x:450,y:320,w:220,h:100},{x:1730,y:320,w:220,h:100},{x:450,y:1380,w:220,h:100},{x:1730,y:1380,w:220,h:100},
   {x:1050,y:320,w:300,h:120},{x:1050,y:1360,w:300,h:120},{x:280,y:800,w:120,h:280},{x:2000,y:800,w:120,h:280},{x:1080,y:820,w:240,h:160}
@@ -22,7 +22,7 @@ function addBots(room){
   let k=0;
   while(room.players.size<MATCH_SIZE){
     const id=String(nextId++),pos=validSpawn(room);
-    room.players.set(id,{id,name:BOT_NAMES[k++%BOT_NAMES.length],isBot:true,ws:null,x:pos.x,y:pos.y,vx:0,vy:0,alive:true,color:colors[(Number(id)-1)%colors.length],hat:hats[(Number(id)-1)%hats.length],facingAngle:0,dashCdTimer:0,dashTimer:0,input:{}});
+    room.players.set(id,{id,name:BOT_NAMES[k++%BOT_NAMES.length],isBot:true,ws:null,x:pos.x,y:pos.y,vx:0,vy:0,alive:true,color:colors[(Number(id)-1)%colors.length],hat:hats[(Number(id)-1)%hats.length],facingAngle:0,dashCdTimer:0,dashTimer:0,trapCooldown:0,trappedTimer:0,input:{}});
   }
 }
 function botThink(room,p,dt){
@@ -49,7 +49,7 @@ function broadcast(room,obj){ for(const p of room.players.values()) send(p.ws,ob
 function event(room,message){ broadcast(room,{type:'event',message}); }
 function createRoomCode(){ let code; do { code=crypto.randomBytes(3).toString('hex').toUpperCase(); } while(rooms.has(code)); return code; }
 function clearRoomIfEmpty(room){ if(room && room.players.size===0) rooms.delete(room.code); }
-function makeRoom(code){ return {isPublic:false,startAt:0,lastStatus:0,code,players:new Map(),active:false,round:1,fuseTime:CONFIG.fuse,maxFuse:CONFIG.fuse,holderId:null,projectile:null,lastTick:Date.now(),ended:false}; }
+function makeRoom(code){ return {isPublic:false,startAt:0,lastStatus:0,code,players:new Map(),traps:[],active:false,round:1,fuseTime:CONFIG.fuse,maxFuse:CONFIG.fuse,holderId:null,projectile:null,lastTick:Date.now(),ended:false}; }
 function validSpawn(room){
   for(let i=0;i<150;i++){
     const x=rand(100,CONFIG.width-100), y=rand(100,CONFIG.height-100);
@@ -61,13 +61,13 @@ function validSpawn(room){
 }
 function startRoom(room){
   if(room.active || room.players.size<2) return;
-  room.active=true; room.ended=false; room.round=1; room.maxFuse=CONFIG.fuse; room.fuseTime=CONFIG.fuse; room.projectile=null;
-  for(const p of room.players.values()){ const pos=validSpawn(room); p.x=pos.x;p.y=pos.y;p.vx=0;p.vy=0;p.alive=true;p.dashCdTimer=0;p.dashTimer=0;p.input={}; }
+  room.active=true; room.startAt=0; room.ended=false; room.round=1; room.maxFuse=CONFIG.fuse; room.fuseTime=CONFIG.fuse; room.projectile=null; room.traps=[];
+  for(const p of room.players.values()){ const pos=validSpawn(room); p.x=pos.x;p.y=pos.y;p.vx=0;p.vy=0;p.alive=true;p.dashCdTimer=0;p.dashTimer=0;p.trapCooldown=0;p.trappedTimer=0;p.input={}; }
   const living=[...room.players.values()].filter(p=>p.alive); room.holderId=living[Math.floor(Math.random()*living.length)].id;
   event(room,'ONLINE MATCH STARTED!');
 }
 function snapshot(room){
-  return {type:'snapshot',state:{active:room.active,round:room.round,fuseTime:room.fuseTime,maxFuse:room.maxFuse,holderId:room.holderId,projectile:room.projectile?{x:room.projectile.x,y:room.projectile.y}:null,players:[...room.players.values()].map(p=>({id:p.id,name:p.name,x:p.x,y:p.y,vx:p.vx,vy:p.vy,alive:p.alive,color:p.color,hat:p.hat,facingAngle:p.facingAngle,dashCdTimer:p.dashCdTimer,isDashing:p.dashTimer>0}))}};
+  return {type:'snapshot',state:{active:room.active,round:room.round,fuseTime:room.fuseTime,maxFuse:room.maxFuse,holderId:room.holderId,projectile:room.projectile?{x:room.projectile.x,y:room.projectile.y}:null,players:[...room.players.values()].map(p=>({id:p.id,name:p.name,x:p.x,y:p.y,vx:p.vx,vy:p.vy,alive:p.alive,color:p.color,hat:p.hat,facingAngle:p.facingAngle,dashCdTimer:p.dashCdTimer,trapCooldown:p.trapCooldown||0,trappedTimer:p.trappedTimer||0,isDashing:p.dashTimer>0})),traps:room.traps.map(t=>({x:t.x,y:t.y,radius:t.radius,life:t.life,ownerId:t.ownerId}))}};
 }
 function collidesObstacle(x,y,r){ return obstacles.some(o=>{const cx=Math.max(o.x,Math.min(x,o.x+o.w));const cy=Math.max(o.y,Math.min(y,o.y+o.h));return dist(x,y,cx,cy)<r;}); }
 function chooseHolder(room,id){ const p=room.players.get(id); room.holderId=p&&p.alive?id:null; }
@@ -79,11 +79,13 @@ function tickRoom(room,dt){
     if(p.isBot) botThink(room,p,dt);
     const i=p.input||{};
     if(p.dashCdTimer>0) p.dashCdTimer=Math.max(0,p.dashCdTimer-dt);
+    if(p.trapCooldown>0) p.trapCooldown=Math.max(0,p.trapCooldown-dt);
+    if(p.trappedTimer>0) p.trappedTimer=Math.max(0,p.trappedTimer-dt);
     if(i.dash && p.dashCdTimer<=0 && p.dashTimer<=0){p.dashTimer=CONFIG.dashDuration;p.dashCdTimer=CONFIG.dashCooldown;p.facingAngle=Math.atan2((i.aimY||p.y)-p.y,(i.aimX||p.x)-p.x);}
     let mx=(i.right?1:0)-(i.left?1:0), my=(i.down?1:0)-(i.up?1:0);
     if(mx&&my){mx*=Math.SQRT1_2;my*=Math.SQRT1_2;}
     if(p.dashTimer>0){p.dashTimer=Math.max(0,p.dashTimer-dt);p.vx=Math.cos(p.facingAngle)*CONFIG.dashSpeed;p.vy=Math.sin(p.facingAngle)*CONFIG.dashSpeed;}
-    else {p.vx=mx*CONFIG.speed;p.vy=my*CONFIG.speed;}
+    else {const slow=p.trappedTimer>0?0.35:1;p.vx=mx*CONFIG.speed*slow;p.vy=my*CONFIG.speed*slow;}
     if(Number.isFinite(i.aimX)&&Number.isFinite(i.aimY) && dist(p.x,p.y,i.aimX,i.aimY)>1) p.facingAngle=Math.atan2(i.aimY-p.y,i.aimX-p.x);
     const nx=Math.max(CONFIG.radius+10,Math.min(CONFIG.width-CONFIG.radius-10,p.x+p.vx*dt));
     const ny=Math.max(CONFIG.radius+10,Math.min(CONFIG.height-CONFIG.radius-10,p.y+p.vy*dt));
@@ -95,6 +97,16 @@ function tickRoom(room,dt){
   for(let i=0;i<living.length;i++) for(let j=i+1;j<living.length;j++){
     const a=living[i],b=living[j],d=dist(a.x,a.y,b.x,b.y),min=CONFIG.radius*2;
     if(d>0&&d<min){const push=(min-d)/2,dx=(b.x-a.x)/d,dy=(b.y-a.y)/d;a.x-=dx*push;a.y-=dy*push;b.x+=dx*push;b.y+=dy*push;}
+  }
+  for(const trap of room.traps) trap.life-=dt;
+  room.traps=room.traps.filter(trap=>trap.life>0);
+  for(const trap of [...room.traps]) {
+    const victim=living.find(p=>p.id!==trap.ownerId && dist(p.x,p.y,trap.x,trap.y)<p.radius+trap.radius*0.55);
+    if(victim) {
+      victim.trappedTimer=Math.max(victim.trappedTimer||0,CONFIG.trapSlowTime);
+      room.traps=room.traps.filter(t=>t!==trap);
+      event(room,victim.name+' HIT A TRAP!');
+    }
   }
   const holder=room.players.get(room.holderId);
   if(room.projectile){
@@ -110,7 +122,14 @@ function tickRoom(room,dt){
   for(const p of room.players.values()){
     const i=p.input||{};
     if(i.throw){i.throw=false;if(room.active && !room.projectile && room.holderId===p.id && p.alive){const aimX=Number.isFinite(i.aimX)?i.aimX:p.x+Math.cos(p.facingAngle)*350;const aimY=Number.isFinite(i.aimY)?i.aimY:p.y+Math.sin(p.facingAngle)*350;const angle=Math.atan2(aimY-p.y,aimX-p.x);const maxDistance=Math.min(900,Math.max(120,dist(p.x,p.y,aimX,aimY)));room.projectile={x:p.x,y:p.y,vx:Math.cos(angle)*CONFIG.throwSpeed,vy:Math.sin(angle)*CONFIG.throwSpeed,throwerId:p.id,travelled:0,maxDistance};room.holderId=null;event(room,p.name+' THREW THE SPUD!');}}
-    if(i.trap){i.trap=false;}
+    if(i.trap){
+      i.trap=false;
+      if(room.active && p.alive && room.holderId===p.id && (p.trapCooldown||0)<=0 && room.traps.length<24){
+        room.traps.push({x:p.x,y:p.y,radius:CONFIG.trapRadius,life:CONFIG.trapLife,ownerId:p.id});
+        p.trapCooldown=CONFIG.trapCooldown;
+        event(room,p.name+' SET A TRAP!');
+      }
+    }
     if(i.dash) i.dash=false;
   }
   finishIfOne(room);
@@ -131,12 +150,14 @@ wss.on('connection',ws=>{
       if(msg.type==='quick'){room=[...rooms.values()].find(r=>r.isPublic&&!r.active&&!r.ended&&humans(r)<MATCH_SIZE);if(!room){room=makeRoom(createRoomCode());room.isPublic=true;rooms.set(room.code,room);}}
       else if(msg.type==='create'){room=makeRoom(createRoomCode());rooms.set(room.code,room);}
       else {const code=String(msg.room||'').toUpperCase();room=rooms.get(code);if(!room){send(ws,{type:'error',message:'Room not found. Check the code or create a room.'});return;}if(room.active){send(ws,{type:'error',message:'That match has already started.'});return;}if(room.players.size>=16){send(ws,{type:'error',message:'Room is full.'});return;}}
-      const id=String(nextId++),pos=validSpawn(room);const player={id,name:String(msg.name||'Player').replace(/[<>]/g,'').slice(0,14)||'Player',ws,x:pos.x,y:pos.y,vx:0,vy:0,alive:true,color:colors[(Number(id)-1)%colors.length],hat:hats[(Number(id)-1)%hats.length],facingAngle:0,dashCdTimer:0,dashTimer:0,input:{}};
+      const id=String(nextId++),pos=validSpawn(room);const player={id,name:String(msg.name||'Player').replace(/[<>]/g,'').slice(0,14)||'Player',ws,x:pos.x,y:pos.y,vx:0,vy:0,alive:true,color:colors[(Number(id)-1)%colors.length],hat:hats[(Number(id)-1)%hats.length],facingAngle:0,dashCdTimer:0,dashTimer:0,trapCooldown:0,trappedTimer:0,input:{}};
       room.players.set(id,player);ws.roomCode=room.code;ws.playerId=id;
       send(ws,{type:'joined',playerId:id,room:room.code});
       broadcast(room,{type:'status',message:`Room ${room.code}: ${room.players.size}/16 players connected. Share the room code.`});
       if(room.isPublic){if(!room.startAt)room.startAt=Date.now()+QUICK_WAIT;if(humans(room)>=MATCH_SIZE)room.startAt=Date.now();}
-      else if(room.players.size>=2) startRoom(room);
+      else if(room.players.size>=2 && !room.active){
+        if(!room.startAt) { room.startAt=Date.now()+60000; room.lastStatus=0; }
+      }
       broadcast(room,snapshot(room));
     } else if(msg.type==='input' && ws.roomCode && ws.playerId){
       const room=rooms.get(ws.roomCode),p=room&&room.players.get(ws.playerId);if(!p)return;
@@ -148,14 +169,21 @@ wss.on('connection',ws=>{
     const p=room.players.get(ws.playerId);if(p){room.players.delete(ws.playerId);if(room.holderId===ws.playerId)room.holderId=null;}
     if(humans(room)===0){rooms.delete(room.code);return;}
     if(room.active){const alive=[...room.players.values()].filter(x=>x.alive);if(alive.length<=1){room.active=false;broadcast(room,{type:'gameover',winnerId:alive[0]?.id||null});}else if(!room.projectile&&room.holderId===null){room.holderId=alive[0].id;}}
-    broadcast(room,{type:'status',message:`A player disconnected. ${room.players.size} player(s) remain.`});
+    if(!room.isPublic && !room.active && room.players.size<2) room.startAt=0;
+    broadcast(room,{type:'status',message:(!room.active && !room.isPublic && room.players.size<2) ? `Waiting for player 2. The 60-second countdown starts when they join.` : `A player disconnected. ${room.players.size} player(s) remain.`});
   });
 });
 setInterval(()=>{const now=Date.now();for(const room of rooms.values()){const dt=Math.min(.05,Math.max(.001,(now-room.lastTick)/1000));room.lastTick=now;try{
-      if(room.isPublic&&!room.active&&!room.ended&&room.startAt){
+      if(!room.active&&!room.ended&&room.startAt){
         const left=room.startAt-now;
-        if(left<=0){addBots(room);startRoom(room);}
-        else if(now-room.lastStatus>=1000){room.lastStatus=now;broadcast(room,{type:'status',message:`MATCHMAKING: ${humans(room)} player(s) found. Starting in ${Math.ceil(left/1000)}s - empty spots are filled with bots!`});}
+        if(room.isPublic){
+          if(left<=0){addBots(room);startRoom(room);}
+          else if(now-room.lastStatus>=1000){room.lastStatus=now;broadcast(room,{type:'status',message:`MATCHMAKING: ${humans(room)} player(s) found. Starting in ${Math.ceil(left/1000)}s - empty spots are filled with bots!`});}
+        } else if(room.players.size<2) {
+          room.startAt=0;
+          broadcast(room,{type:'status',message:'Waiting for player 2. The countdown will restart when they join.'});
+        } else if(left<=0) startRoom(room);
+        else if(now-room.lastStatus>=1000){room.lastStatus=now;broadcast(room,{type:'status',message:`LOBBY COUNTDOWN: Game starts in ${Math.ceil(left/1000)} seconds. Share room code ${room.code} so more players can join!`});}
       }
       tickRoom(room,dt);broadcast(room,snapshot(room));}catch(err){console.error('Room error:',err);}}},50);
 server.listen(PORT,'0.0.0.0',()=>console.log(`Hot Potato Tycoon online server listening on port ${PORT}`));
