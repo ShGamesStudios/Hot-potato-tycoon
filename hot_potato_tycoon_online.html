@@ -266,6 +266,47 @@
         #dashBtn { background: rgba(33, 150, 243, 0.85); }
         #trapBtn { background: rgba(156, 39, 176, 0.85); }
 
+        /* Responsive layouts and more forgiving touch controls */
+        .screen-overlay { overflow-y: auto; overscroll-behavior: contain; padding: 24px 14px; }
+        .stats-box { flex-wrap: wrap; justify-content: center; }
+        button, input, .t-btn, .touch-joystick-base { touch-action: manipulation; }
+        input, textarea { user-select: text; -webkit-user-select: text; }
+        #mobileControls { pointer-events: none; }
+        .touch-joystick-base, .touch-buttons { touch-action: none; }
+        @media (max-width: 700px) {
+            h1 { font-size: clamp(2rem, 9vw, 3.2rem); letter-spacing: 1px; }
+            .subtitle { font-size: 1rem; margin-bottom: 16px; text-align: center; }
+            .btn { font-size: 1.05rem; padding: 12px 20px; border-width: 3px; margin: 6px; max-width: calc(100vw - 28px); }
+            .online-panel { width: min(100%, 440px); }
+            .menu-input-group input { width: min(280px, calc(100vw - 40px)); font-size: 1.1rem; }
+            .stats-box { gap: 8px; margin-bottom: 14px; }
+            .stat-card { padding: 8px 10px; min-width: 88px; }
+            .stat-card .stat-value { font-size: 1.25rem; }
+            .stat-card .stat-label { font-size: .68rem; }
+            .ui-layer { padding: max(8px, env(safe-area-inset-top)) 8px 8px; }
+            .hud-top { gap: 5px; align-items: flex-start; }
+            .hud-panel { padding: 6px 8px; border-width: 2px; border-radius: 10px; font-size: 10px; }
+            .hud-panel span { font-size: 15px; }
+            .hud-panel div { font-size: 9px !important; }
+            .fuse-container { width: min(42vw, 190px); padding: 7px 8px; border-width: 2px; border-radius: 10px; }
+            #hudFuseText { font-size: 10px !important; }
+            .fuse-bar-bg { height: 10px; }
+            #onlineHudStatus { font-size: 10px !important; max-width: 95vw; }
+            .touch-joystick-base { width: 116px; height: 116px; bottom: max(16px, env(safe-area-inset-bottom)); left: max(14px, env(safe-area-inset-left)); }
+            .touch-joystick-thumb { top: 27px; left: 27px; width: 56px; height: 56px; }
+            .touch-buttons { bottom: max(16px, env(safe-area-inset-bottom)); right: max(12px, env(safe-area-inset-right)); gap: 8px; align-items: flex-end; }
+            .t-btn { width: clamp(52px, 15vw, 68px); height: clamp(52px, 15vw, 68px); font-size: .72rem; border-width: 2px; }
+            #throwBtn { width: clamp(66px, 18vw, 82px) !important; height: clamp(66px, 18vw, 82px) !important; font-size: .82rem !important; }
+            #announcement { top: 24%; font-size: clamp(1.2rem, 5vw, 2rem); max-width: 90vw; }
+        }
+        @media (max-width: 390px) {
+            .touch-buttons { gap: 5px; right: 8px; }
+            .touch-joystick-base { width: 104px; height: 104px; left: 8px; }
+            .touch-joystick-thumb { top: 22px; left: 22px; width: 54px; height: 54px; }
+            .t-btn { width: 49px; height: 49px; font-size: .63rem; }
+            #throwBtn { width: 62px !important; height: 62px !important; }
+        }
+
         /* Floating announcements */
         #announcement {
             position: absolute;
@@ -528,34 +569,38 @@
             playerName: "You"
         };
 
-        // Persistent Career Stats
-        let playerStats = {
-            matchesPlayed: 0,
-            wins: 0,
-            bestRound: 1
-        };
-
+        // Session stats: they update during this visit and reset when the site is closed.
+        let playerStats = { matchesPlayed: 0, wins: 0, bestRound: 1 };
+        let currentMatchRecorded = false;
         function loadStats() {
             try {
-                const saved = localStorage.getItem('hot_potato_stats');
-                if (saved) {
-                    playerStats = JSON.parse(saved);
+                const saved = JSON.parse(sessionStorage.getItem('hot_potato_stats_session') || 'null');
+                if (saved && Number.isFinite(saved.matchesPlayed) && Number.isFinite(saved.wins) && Number.isFinite(saved.bestRound)) {
+                    playerStats = {
+                        matchesPlayed: Math.max(0, Math.floor(saved.matchesPlayed)),
+                        wins: Math.max(0, Math.floor(saved.wins)),
+                        bestRound: Math.max(1, Math.floor(saved.bestRound))
+                    };
                 }
-            } catch(e) {}
+            } catch (_) { /* Keep in-memory defaults if session storage is unavailable. */ }
             updateStatsUI();
         }
-
         function saveStats() {
-            try {
-                localStorage.setItem('hot_potato_stats', JSON.stringify(playerStats));
-            } catch(e) {}
+            try { sessionStorage.setItem('hot_potato_stats_session', JSON.stringify(playerStats)); } catch (_) {}
             updateStatsUI();
         }
-
         function updateStatsUI() {
             document.getElementById('statMatchesPlayed').innerText = playerStats.matchesPlayed;
             document.getElementById('statWins').innerText = playerStats.wins;
             document.getElementById('statBestRound').innerText = playerStats.bestRound;
+        }
+        function recordMatch(isWinner) {
+            if (currentMatchRecorded) return;
+            currentMatchRecorded = true;
+            playerStats.matchesPlayed++;
+            if (isWinner) playerStats.wins++;
+            playerStats.bestRound = Math.max(playerStats.bestRound, gameState.round || 1);
+            saveStats();
         }
 
         let entities = [];
@@ -573,6 +618,7 @@
         const justPressed = { space: false, shift: false, e: false, r: false };
         
         let mouse = { x: 0, y: 0, worldX: 0, worldY: 0, down: false };
+        let touchAimSet = false;
         let mobileInputs = { throw: false, dash: false, trap: false };
 
         let announcementTimer = null;
@@ -702,7 +748,7 @@
 
                 this.isTrapped = false;
                 for (let trap of traps) {
-                    if (dist(this.x, this.y, trap.x, trap.y) < trap.radius) {
+                    if (trap.owner !== this && dist(this.x, this.y, trap.x, trap.y) < trap.radius) {
                         targetVx *= 0.35;
                         targetVy *= 0.35;
                         this.isTrapped = true;
@@ -1216,6 +1262,7 @@
 
         // --- GAME INITIALIZATION & LOOPS ---
         function initGame() {
+            currentMatchRecorded = false;
             entities = [];
             obstacles = [];
             projectiles = [];
@@ -1406,20 +1453,23 @@
             if (living.length <= 1) endGame(living[0]);
 
             if (justPressed.space && potatoHolder && potatoHolder.isHuman) throwPotatoAt(mouse.worldX, mouse.worldY);
-            if (mobileInputs.throw && potatoHolder && potatoHolder.isHuman) {
+            if (mobileInputs.throw) {
                 mobileInputs.throw = false;
-                const tx = potatoHolder.x + Math.cos(potatoHolder.facingAngle) * 300;
-                const ty = potatoHolder.y + Math.sin(potatoHolder.facingAngle) * 300;
-                throwPotatoAt(tx, ty);
+                if (potatoHolder && potatoHolder.isHuman) {
+                    const tx = potatoHolder.x + Math.cos(potatoHolder.facingAngle) * 420;
+                    const ty = potatoHolder.y + Math.sin(potatoHolder.facingAngle) * 420;
+                    throwPotatoAt(tx, ty);
+                }
             }
             if (justPressed.e && potatoHolder && potatoHolder.isHuman) dropTrap(potatoHolder);
-            if (mobileInputs.trap && potatoHolder && potatoHolder.isHuman) {
+            if (mobileInputs.trap) {
                 mobileInputs.trap = false;
-                dropTrap(potatoHolder);
+                if (potatoHolder && potatoHolder.isHuman) dropTrap(potatoHolder);
             }
-            if (mobileInputs.dash && potatoHolder && potatoHolder.isHuman) {
+            if (mobileInputs.dash) {
                 mobileInputs.dash = false;
-                if (potatoHolder.dashCdTimer <= 0) potatoHolder.triggerDash();
+                const humanPlayer = entities.find(p => p.isHuman && p.alive);
+                if (humanPlayer && humanPlayer.dashCdTimer <= 0) humanPlayer.triggerDash();
             }
 
             for (let k in justPressed) justPressed[k] = false;
@@ -1451,13 +1501,7 @@
             gameState.active = false;
             const isWinner = winner && winner.isHuman;
 
-            playerStats.matchesPlayed++;
-            if (isWinner) {
-                playerStats.wins++;
-            }
-            if (gameState.round > playerStats.bestRound) {
-                playerStats.bestRound = gameState.round;
-            }
+            recordMatch(!!isWinner);
             saveStats();
 
             document.getElementById('endStatRound').innerText = gameState.round;
@@ -1605,11 +1649,13 @@
             update(dt);
             render();
 
-            requestAnimationFrame(gameLoop);
+            loadStats();
+        requestAnimationFrame(gameLoop);
         }
 
         // --- ONLINE MULTIPLAYER CLIENT ---
         let shockwaves = [];
+        let onlineCountdownMessage = '';
         function boomEffect(x, y) {
             sound.explosion(); gameState.screenShake = 1.0;
             shockwaves.push({ x, y, t: Date.now() });
@@ -1681,7 +1727,8 @@
                     document.getElementById('roomCodeInput').value = msg.room;
                     document.getElementById('copyRoomCodeBtn').hidden = false;
                     document.getElementById('copyRoomCodeBtn').textContent = 'COPY ROOM CODE';
-                    onlineStatus('Room ' + msg.room + ' created/joined — copy the code to invite a friend. Waiting for another player…');
+                    currentMatchRecorded = false;
+                    onlineStatus('Room ' + msg.room + ' created/joined — copy the code to invite friends. The 60-second countdown begins when player 2 joins.');
                     document.getElementById('menuScreen').classList.add('hidden');
                     document.getElementById('hudLayer').style.display = 'flex';
                     document.getElementById('gameOverScreen').classList.add('hidden');
@@ -1693,6 +1740,8 @@
                 if (msg.type === 'event') showAnnouncement(msg.message);
                 if (msg.type === 'gameover') {
                     gameState.active = false;
+                    recordMatch(String(msg.winnerId) === String(networkGame.playerId));
+                    updateStatsUI();
                     document.getElementById('gameOverScreen').classList.remove('hidden');
                     document.getElementById('gameOverTitle').textContent = msg.winnerId === networkGame.playerId ? 'ONLINE VICTORY!' : 'MARKET CRASH!';
                     document.getElementById('gameOverSubtitle').textContent = msg.winnerId === networkGame.playerId ? 'You are the last tycoon standing!' : 'Another player survived the chaos.';
@@ -1710,6 +1759,7 @@
             ws.addEventListener('error', () => onlineStatus('Server connection failed. Run the included server and try again.'));
         }
         function initOnlineArena() {
+            currentMatchRecorded = false;
             entities = []; projectiles = []; traps = []; particles = []; floatingTexts = [];
             spectators = []; glowingPads = [];
             gameState.round = 1; gameState.survivors = 0; gameState.fuseTime = CONFIG.baseFuse;
@@ -1735,6 +1785,11 @@
                 return p;
             });
             potatoHolder = entities.find(p => String(p.id) === String(state.holderId)) || null;
+            traps = (state.traps || []).map(data => {
+                const t = new Trap(data.x, data.y, null);
+                t.radius = data.radius || 38; t.life = data.life || 0;
+                return t;
+            });
             if (state.projectile) {
                 const q = state.projectile;
                 networkGame.projectileView = { x:q.x, y:q.y, draw(){ ctx.save(); ctx.fillStyle='#ff9800'; ctx.strokeStyle='#3e2723'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(this.x,this.y,14,0,Math.PI*2); ctx.fill(); ctx.stroke(); ctx.restore(); } };
@@ -1746,12 +1801,14 @@
             if (!gameState.active) return;
             const now = performance.now();
             const human = entities.find(p => p.isHuman);
-            if (human) updateMouseWorldCoordinates();
+            if (human && (!isTouchDevice || touchAimSet)) updateMouseWorldCoordinates();
             if (now - networkGame.lastInputSent > 40) {
                 networkGame.lastInputSent = now;
+                const aimX = (isTouchDevice && human && !touchAimSet) ? human.x + Math.cos(human.facingAngle) * 420 : mouse.worldX;
+                const aimY = (isTouchDevice && human && !touchAimSet) ? human.y + Math.sin(human.facingAngle) * 420 : mouse.worldY;
                 networkGame.socket.send(JSON.stringify({ type:'input', input:{
                     up:!!(keys.w||keys.arrowUp), down:!!(keys.s||keys.arrowDown), left:!!(keys.a||keys.arrowLeft), right:!!(keys.d||keys.arrowRight),
-                    aimX:mouse.worldX, aimY:mouse.worldY, dash:!!(justPressed.shift || mobileInputs.dash),
+                    aimX, aimY, dash:!!(justPressed.shift || mobileInputs.dash),
                     throw:!!(justPressed.space || mobileInputs.throw || mouse.down),
                     trap:!!(justPressed.e || mobileInputs.trap)
                 }}));
@@ -1824,6 +1881,23 @@
             mouse.down = false;
         });
 
+        // On phones/tablets, tap or drag the open arena to aim; the joystick and action
+        // buttons remain independently usable with other fingers.
+        function updateTouchAim(touch) {
+            mouse.x = touch.clientX;
+            mouse.y = touch.clientY;
+            touchAimSet = true;
+            updateMouseWorldCoordinates();
+        }
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.changedTouches.length) updateTouchAim(e.changedTouches[0]);
+            if (e.cancelable) e.preventDefault();
+        }, { passive: false });
+        canvas.addEventListener('touchmove', (e) => {
+            if (e.changedTouches.length) updateTouchAim(e.changedTouches[0]);
+            if (e.cancelable) e.preventDefault();
+        }, { passive: false });
+
         const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
         if (isTouchDevice) {
             document.getElementById('mobileControls').style.display = 'block';
@@ -1854,7 +1928,7 @@
             e.preventDefault();
         });
 
-        joystickBase.addEventListener('touchend', (e) => {
+        function releaseJoystick(e) {
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const touch = e.changedTouches[i];
                 if (touch.identifier === joystickTouchId) {
@@ -1863,8 +1937,10 @@
                     keys.w = false; keys.s = false; keys.a = false; keys.d = false;
                 }
             }
-            e.preventDefault();
-        });
+            if (e.cancelable) e.preventDefault();
+        }
+        joystickBase.addEventListener('touchend', releaseJoystick, { passive: false });
+        joystickBase.addEventListener('touchcancel', releaseJoystick, { passive: false });
 
         function handleJoystick(x, y) {
             const dx = x - joystickCenter.x;
@@ -1884,23 +1960,23 @@
             keys.d = dx > 15;
         }
 
-        document.getElementById('throwBtn').addEventListener('touchstart', (e) => {
-            sound.init();
-            mobileInputs.throw = true;
-            e.preventDefault();
-        });
-
-        document.getElementById('dashBtn').addEventListener('touchstart', (e) => {
-            sound.init();
-            mobileInputs.dash = true;
-            e.preventDefault();
-        });
-
-        document.getElementById('trapBtn').addEventListener('touchstart', (e) => {
-            sound.init();
-            mobileInputs.trap = true;
-            e.preventDefault();
-        });
+        function bindTouchAction(id, action) {
+            const el = document.getElementById(id);
+            const activate = (e) => {
+                sound.init();
+                mobileInputs[action] = true;
+                if (e.cancelable) e.preventDefault();
+            };
+            el.addEventListener('touchstart', activate, { passive: false });
+            el.addEventListener('pointerdown', (e) => {
+                if (e.pointerType === 'mouse') return;
+                activate(e);
+            });
+            el.addEventListener('contextmenu', e => e.preventDefault());
+        }
+        bindTouchAction('throwBtn', 'throw');
+        bindTouchAction('dashBtn', 'dash');
+        bindTouchAction('trapBtn', 'trap');
 
         document.getElementById('playerNameInput').addEventListener('keydown', (e) => {
             // Name entry is committed only by clicking PLAY MATCH.
@@ -1924,13 +2000,18 @@
         });
 
         document.getElementById('restartBtn').addEventListener('click', () => {
-            if (networkGame.mode) {
-                if (networkGame.socket) networkGame.socket.close();
-                networkGame.mode = false; networkGame.connected = false; networkGame.playerId = null; networkGame.room = '';
-                document.getElementById('gameOverScreen').classList.add('hidden');
-                document.getElementById('hudLayer').style.display = 'none';
-                document.getElementById('menuScreen').classList.remove('hidden');
-            } else restartGame();
+            if (networkGame.socket) { try { networkGame.socket.close(); } catch (_) {} }
+            networkGame.mode = false; networkGame.connected = false; networkGame.playerId = null; networkGame.room = '';
+            for (const k of Object.keys(keys)) keys[k] = false;
+            for (const k of Object.keys(mobileInputs)) mobileInputs[k] = false;
+            mouse.down = false; justPressed.space = false; justPressed.shift = false; justPressed.e = false;
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('hudLayer').style.display = 'none';
+            document.getElementById('menuScreen').classList.remove('hidden');
+            document.getElementById('copyRoomCodeBtn').hidden = true;
+            document.getElementById('onlineStatus').textContent = 'Create a room, then copy its code and share it with a friend.';
+            updateStatsUI();
+            setBanner('');
         });
 
         function restartGame() {
