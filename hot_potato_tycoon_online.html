@@ -658,11 +658,12 @@
         let clipRecorder = null, clipChunks = [], clipRecorderReady = false, lastHighlight = 'ROUND HIGHLIGHT: Cartoon chaos compilation';
         let lastClipActionAt = 0;
         function initClipRecorder(){
+            if (clipRecorderReady || clipRecorder) return;
             const c=document.getElementById('gameCanvas');
             if(!c || !c.captureStream || !window.MediaRecorder){document.getElementById('clipStatus').textContent='Video capture is not supported in this browser. You can still play normally.';return;}
             try{
-                const stream=c.captureStream(20); const mime=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
-                clipRecorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
+                const stream=c.captureStream(10); const mime=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
+                clipRecorder=new MediaRecorder(stream,mime?{mimeType:mime,videoBitsPerSecond:800000}:{videoBitsPerSecond:800000});
                 clipRecorder.ondataavailable=e=>{if(e.data&&e.data.size){clipChunks.push({blob:e.data,time:Date.now()});clipChunks=clipChunks.filter(x=>Date.now()-x.time<16000);}};
                 clipRecorder.start(1000);clipRecorderReady=true;
             }catch(e){document.getElementById('clipStatus').textContent='Clip recording could not start in this browser.';}
@@ -692,7 +693,6 @@
         function dist(x1, y1, x2, y2) { return Math.hypot(x2 - x1, y2 - y1); }
         
         function showAnnouncement(text) {
-            if (typeof noteRoundHighlight === 'function') noteRoundHighlight(text);
             const el = document.getElementById('announcement');
             el.innerText = text;
             el.style.opacity = '1';
@@ -1746,8 +1746,7 @@
             update(dt);
             render();
 
-            initClipRecorder();
-        requestAnimationFrame(gameLoop);
+            requestAnimationFrame(gameLoop);
         }
 
         // --- ONLINE MULTIPLAYER CLIENT ---
