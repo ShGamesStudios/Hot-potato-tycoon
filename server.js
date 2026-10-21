@@ -82,7 +82,7 @@ function tickRoom(room,dt){
     if(p.isBot) botThink(room,p,dt);
     const i=p.input||{};
     if(p.dashCdTimer>0) p.dashCdTimer=Math.max(0,p.dashCdTimer-dt);
-    if(i.dash && p.dashCdTimer<=0 && p.dashTimer<=0){p.dashTimer=CONFIG.dashDuration;p.dashCdTimer=CONFIG.dashCooldown;p.facingAngle=Math.atan2((i.aimY||p.y)-p.y,(i.aimX||p.x)-p.x);}
+    if(i.dash && p.dashCdTimer<=0 && p.dashTimer<=0){p.dashTimer=CONFIG.dashDuration;p.dashCdTimer=CONFIG.dashCooldown;p.facingAngle=Math.atan2((i.aimY||p.y)-p.y,(i.aimX||p.x)-p.x);event(room,p.name+' USED A DASH!');}
     let mx=(i.right?1:0)-(i.left?1:0), my=(i.down?1:0)-(i.up?1:0);
     if(mx&&my){mx*=Math.SQRT1_2;my*=Math.SQRT1_2;}
     if(p.dashTimer>0){p.dashTimer=Math.max(0,p.dashTimer-dt);p.vx=Math.cos(p.facingAngle)*CONFIG.dashSpeed;p.vy=Math.sin(p.facingAngle)*CONFIG.dashSpeed;}
@@ -142,13 +142,23 @@ wss.on('connection',ws=>{
       if(msg.type==='quick'){room=[...rooms.values()].find(r=>r.isPublic&&!r.active&&!r.ended&&humans(r)<MATCH_SIZE);if(!room){room=makeRoom(createRoomCode(),randomMap());room.isPublic=true;rooms.set(room.code,room);}}
       else if(msg.type==='create'){room=makeRoom(createRoomCode(),randomMap());rooms.set(room.code,room);}
       else {const code=String(msg.room||'').toUpperCase();room=rooms.get(code);if(!room){send(ws,{type:'error',message:'Room not found. Check the code or create a room.'});return;}if(room.active){send(ws,{type:'error',message:'That match has already started.'});return;}if(room.players.size>=16){send(ws,{type:'error',message:'Room is full.'});return;}}
-      const id=String(nextId++),pos=validSpawn(room);const cosmetics=msg.cosmetics||{};const player={id,name:String(msg.name||'Player').replace(/[<>]/g,'').slice(0,14)||'Player',ws,x:pos.x,y:pos.y,vx:0,vy:0,alive:true,color:colors[(Number(id)-1)%colors.length],hat:/^(cap|tophat|cowboy|crown|leaf|icehelm)$/.test(cosmetics.hat)?cosmetics.hat:hats[(Number(id)-1)%hats.length],suit:/^(classic|business|jungle|captain|ice)$/.test(cosmetics.suit)?cosmetics.suit:'classic',briefcase:/^(classic|gold|neon|jungle|ice)$/.test(cosmetics.briefcase)?cosmetics.briefcase:'classic',facingAngle:0,dashCdTimer:0,dashTimer:0,trapCooldown:0,trappedTimer:0,portalCooldown:0,input:{}};
+      const id=String(nextId++),pos=validSpawn(room);const cosmetics=msg.cosmetics||{};const player={id,name:String(msg.name||'Player').replace(/[<>]/g,'').slice(0,14)||'Player',ws,x:pos.x,y:pos.y,vx:0,vy:0,alive:true,color:colors[(Number(id)-1)%colors.length],hat:/^(cap|tophat|cowboy|crown|leaf|icehelm)$/.test(cosmetics.hat)?cosmetics.hat:hats[(Number(id)-1)%hats.length],suit:/^(classic|business|jungle|captain|ice)$/.test(cosmetics.suit)?cosmetics.suit:'classic',briefcase:/^(classic|gold|neon|jungle|ice)$/.test(cosmetics.briefcase)?cosmetics.briefcase:'classic',facingAngle:0,dashCdTimer:0,dashTimer:0,trapCooldown:0,trappedTimer:0,portalCooldown:0,spectatorEmoteAt:0,input:{}};
       room.players.set(id,player);ws.roomCode=room.code;ws.playerId=id;
       send(ws,{type:'joined',playerId:id,room:room.code});
       broadcast(room,{type:'status',message:`Room ${room.code}: ${room.players.size}/16 players connected. Share the room code.`});
       if(room.isPublic){if(!room.startAt)room.startAt=Date.now()+QUICK_WAIT;if(humans(room)>=MATCH_SIZE)room.startAt=Date.now();}
       else if(room.players.size>=2 && !room.active && !room.startAt) { room.startAt=Date.now()+60000; room.lastStatus=0; broadcast(room,{type:'status',message:'LOBBY: 60-second countdown started. Share the room code so more players can join!'}); }
       broadcast(room,snapshot(room));
+    } else if(msg.type==='spectatorEmote' && ws.roomCode && ws.playerId){
+      const room=rooms.get(ws.roomCode),p=room&&room.players.get(ws.playerId);
+      if(!room||!p||p.alive||!room.active) return;
+      const now=Date.now(); if(now-(p.spectatorEmoteAt||0)<1800) return;
+      const emote=msg.emote==='🍅'?'🍅':msg.emote==='👻'?'👻':null; if(!emote) return;
+      const survivors=[...room.players.values()].filter(q=>q.alive);
+      if(!survivors.length) return;
+      const target=survivors[Math.floor(Math.random()*survivors.length)];
+      p.spectatorEmoteAt=now;
+      broadcast(room,{type:'spectatorEmote',fromName:p.name,emote,targetName:target.name});
     } else if(msg.type==='input' && ws.roomCode && ws.playerId){
       const room=rooms.get(ws.roomCode),p=room&&room.players.get(ws.playerId);if(!p)return;
       const i=msg.input||{};p.input={up:!!i.up,down:!!i.down,left:!!i.left,right:!!i.right,aimX:Number(i.aimX),aimY:Number(i.aimY),dash:!!i.dash || !!(p.input&&p.input.dash),throw:!!i.throw || !!(p.input&&p.input.throw),trap:!!i.trap || !!(p.input&&p.input.trap)};
