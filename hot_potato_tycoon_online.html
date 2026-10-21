@@ -160,6 +160,13 @@
         .skin-row label { color:#ffeb3b; font-weight:900; }
         .skin-row select { width:100%; min-width:0; padding:10px; border-radius:12px; border:2px solid #80d8ff; background:#172033; color:#fff; font-weight:700; }
         #changeSkinBtn { margin-top:18px; background:linear-gradient(135deg,#00bcd4,#1976d2); box-shadow:0 8px 24px rgba(0,188,212,.35); }
+        #spectatorPanel{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:80;display:none;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;width:min(94vw,700px);padding:10px;background:#101827ee;border:2px solid #80d8ff;border-radius:18px;box-shadow:0 8px 28px #0009;pointer-events:auto}
+        #spectatorPanel button,#clipActions button{border:2px solid white;border-radius:14px;padding:10px 14px;font-weight:900;background:#263750;color:white;cursor:pointer;font-size:1rem}
+        #spectatorPanel .ghost-action{background:linear-gradient(135deg,#7c4dff,#3949ab)}
+        #clipActions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:4px 0 12px;max-width:90vw}
+        #clipActions button{background:linear-gradient(135deg,#00acc1,#1976d2)}
+        #clipStatus{font-size:.85rem;color:#b8c7df;text-align:center;max-width:90vw;margin-bottom:6px}
+        @media(max-width:700px){#spectatorPanel{bottom:8px;gap:5px;padding:7px}#spectatorPanel button,#clipActions button{font-size:.82rem;padding:9px 10px}}
         @media(max-width:700px){ .skin-panel{padding:14px}.skin-row{grid-template-columns:90px 1fr;gap:8px}.skin-row select{font-size:.9rem}.skin-preview{width:100px;height:100px} }
         .menu-input-group {
             margin-bottom: 20px;
@@ -392,6 +399,13 @@
             </div>
         </div>
 
+        <div id="spectatorPanel" aria-live="polite">
+            <strong style="color:#80d8ff;width:100%;text-align:center">👻 GHOST SPECTATOR MODE — harmless emotes only</strong>
+            <button class="ghost-action" data-emote="🍅">🍅 TOMATO</button>
+            <button class="ghost-action" data-emote="👻">👻 GHOST SCARE</button>
+            <button id="spectatorMenuBtn">MAIN MENU</button>
+        </div>
+
         <!-- Game Over End Screen with Detailed Post-Match Stats -->
         <div class="screen-overlay hidden" id="gameOverScreen">
             <h1 id="gameOverTitle" style="color: #f44336; text-shadow: 4px 4px #b71c1c;">MARKET CRASH!</h1>
@@ -410,6 +424,12 @@
 
             <div id="marketQuote" style="font-style: italic; color: #ffeb3b; margin-bottom: 25px; font-size: 18px; text-align: center; max-width: 500px; padding: 0 20px;"></div>
             
+            <div id="clipActions">
+                <div id="clipHighlight" style="width:100%;font-weight:900;color:#ffeb3b;text-align:center">ROUND HIGHLIGHT: Best moment loading…</div>
+                <button id="downloadClipBtn" type="button">⬇ DOWNLOAD 12s CLIP</button>
+                <button id="shareClipBtn" type="button">↗ SHARE CLIP</button>
+                <div id="clipStatus">Clip capture is local to your browser. Social sharing depends on browser support.</div>
+            </div>
             <button class="btn" id="restartBtn">MAIN MENU</button>
         </div>
     </div>
@@ -635,6 +655,29 @@
 
         let announcementTimer = null;
         let networkGame = { socket: null, connected: false, room: '', playerId: null, mode: false, lastInputSent: 0, pendingAction: null, projectileView: null, statsRecorded: false };
+        let clipRecorder = null, clipChunks = [], clipRecorderReady = false, lastHighlight = 'ROUND HIGHLIGHT: Cartoon chaos compilation';
+        let lastClipActionAt = 0;
+        function initClipRecorder(){
+            const c=document.getElementById('gameCanvas');
+            if(!c || !c.captureStream || !window.MediaRecorder){document.getElementById('clipStatus').textContent='Video capture is not supported in this browser. You can still play normally.';return;}
+            try{
+                const stream=c.captureStream(20); const mime=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
+                clipRecorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
+                clipRecorder.ondataavailable=e=>{if(e.data&&e.data.size){clipChunks.push({blob:e.data,time:Date.now()});clipChunks=clipChunks.filter(x=>Date.now()-x.time<16000);}};
+                clipRecorder.start(1000);clipRecorderReady=true;
+            }catch(e){document.getElementById('clipStatus').textContent='Clip recording could not start in this browser.';}
+        }
+        function recentClipBlob(){const parts=clipChunks.filter(x=>Date.now()-x.time<=12000).map(x=>x.blob);return parts.length?new Blob(parts,{type:clipRecorder?.mimeType||'video/webm'}):null;}
+        function downloadRoundClip(){const b=recentClipBlob();if(!b){document.getElementById('clipStatus').textContent='No clip is ready yet. Play for a few seconds, then try again.';return null;}const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='hot-potato-tycoon-highlight.webm';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000);document.getElementById('clipStatus').textContent='Clip downloaded. It contains the last ~12 seconds captured in this browser.';return b;}
+        async function shareRoundClip(){const b=recentClipBlob();if(!b){document.getElementById('clipStatus').textContent='No clip is ready yet. Play for a few seconds, then try again.';return;}const f=new File([b],'hot-potato-tycoon-highlight.webm',{type:b.type||'video/webm'});if(navigator.share&&navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({title:'Hot Potato Tycoon highlight',text:lastHighlight,files:[f]});document.getElementById('clipStatus').textContent='Share sheet opened.';}catch(e){if(e.name!=='AbortError')document.getElementById('clipStatus').textContent='Sharing was cancelled or is unavailable; use Download instead.';}}else{document.getElementById('clipStatus').textContent='Direct video sharing is not supported here. Download the clip and upload it to your social app.';}}
+        function noteRoundHighlight(message){const m=String(message||'').toLowerCase();if(m.includes('threw the spud'))lastHighlight='ROUND HIGHLIGHT: WORST BETRAYAL — a potato was thrown!';else if(m.includes('used a dash')||m.includes('clutch dash'))lastHighlight='ROUND HIGHLIGHT: MOST CLUTCH DASH';const el=document.getElementById('clipHighlight');if(el)el.textContent=lastHighlight;}
+        function setSpectatorMode(show){const panel=document.getElementById('spectatorPanel');if(panel)panel.style.display=show?'flex':'none';}
+        function sendSpectatorEmote(emote){if(!networkGame.socket||networkGame.socket.readyState!==WebSocket.OPEN||!networkGame.mode)return;networkGame.socket.send(JSON.stringify({type:'spectatorEmote',emote}));}
+        document.querySelectorAll('#spectatorPanel [data-emote]').forEach(b=>b.addEventListener('click',()=>sendSpectatorEmote(b.dataset.emote)));
+        document.getElementById('spectatorMenuBtn').addEventListener('click',()=>{if(networkGame.mode&&!networkGame.statsRecorded){networkGame.statsRecorded=true;playerStats.matchesPlayed++;if(gameState.round>playerStats.bestRound)playerStats.bestRound=gameState.round;saveStats();}if(networkGame.socket)networkGame.socket.close();setSpectatorMode(false);document.getElementById('gameOverScreen').classList.add('hidden');document.getElementById('hudLayer').style.display='none';document.getElementById('menuScreen').classList.remove('hidden');networkGame.mode=false;networkGame.connected=false;networkGame.playerId=null;networkGame.room='';});
+        document.getElementById('downloadClipBtn').addEventListener('click',downloadRoundClip);
+        document.getElementById('shareClipBtn').addEventListener('click',shareRoundClip);
+
 
         const marketQuotes = [
             "\"Buy high, explode low! Absolutely catastrophic portfolio management.\"",
@@ -649,6 +692,7 @@
         function dist(x1, y1, x2, y2) { return Math.hypot(x2 - x1, y2 - y1); }
         
         function showAnnouncement(text) {
+            if (typeof noteRoundHighlight === 'function') noteRoundHighlight(text);
             const el = document.getElementById('announcement');
             el.innerText = text;
             el.style.opacity = '1';
@@ -1569,6 +1613,7 @@
                 subtitle.innerText = "You were blown to corporate smithereens!";
             }
             quoteEl.innerText = marketQuotes[Math.floor(Math.random() * marketQuotes.length)];
+            document.getElementById('clipHighlight').textContent=lastHighlight;
         }
 
         function render() {
@@ -1701,7 +1746,8 @@
             update(dt);
             render();
 
-            requestAnimationFrame(gameLoop);
+            initClipRecorder();
+        requestAnimationFrame(gameLoop);
         }
 
         // --- ONLINE MULTIPLAYER CLIENT ---
@@ -1786,7 +1832,9 @@
                 }
                 if (msg.type === 'status') { onlineStatus(msg.message); if (!gameState.active) setBanner(msg.message); }
                 if (msg.type === 'snapshot') applyNetworkSnapshot(msg.state);
-                if (msg.type === 'event') showAnnouncement(msg.message);
+                if (msg.type === 'event') { showAnnouncement(msg.message); noteRoundHighlight(msg.message); }
+                if (msg.type === 'spectatorEmote') { showAnnouncement(`${msg.emote} ${msg.fromName} sent a harmless ${msg.emote==='🍅'?'tomato':'ghost scare'} toward ${msg.targetName}!`); }
+                if (msg.type === 'spectatorStatus' && String(msg.playerId)===String(networkGame.playerId)) setSpectatorMode(!!msg.show);
                 if (msg.type === 'gameover') {
                     gameState.active = false;
                     if (!networkGame.statsRecorded) {
@@ -1802,6 +1850,7 @@
                     document.getElementById('endStatRound').textContent = gameState.round;
                     document.getElementById('endStatSurvivors').textContent = gameState.survivors;
                     document.getElementById('marketQuote').textContent = 'Online room: ' + networkGame.room;
+                    setSpectatorMode(false); document.getElementById('clipHighlight').textContent=lastHighlight;
                 }
             });
             ws.addEventListener('close', () => {
@@ -1827,6 +1876,8 @@
             gameState.fuseTime = state.fuseTime ?? CONFIG.baseFuse;
             gameState.maxFuse = state.maxFuse || CONFIG.baseFuse;
             gameState.survivors = (state.players || []).filter(p => p.alive).length;
+            const me=(state.players||[]).find(p=>String(p.id)===String(networkGame.playerId));
+            setSpectatorMode(!!(networkGame.mode && state.active && me && !me.alive));
             const old = new Map(entities.map(p => [String(p.id), p]));
             entities = (state.players || []).map(data => {
                 let p = old.get(String(data.id));
@@ -2027,6 +2078,7 @@
         });
 
         document.getElementById('restartBtn').addEventListener('click', () => {
+            setSpectatorMode(false);
             if (networkGame.mode) {
                 if (networkGame.socket) networkGame.socket.close();
                 networkGame.mode = false; networkGame.connected = false; networkGame.playerId = null; networkGame.room = '';
@@ -2065,6 +2117,7 @@
         document.getElementById('finaliseSkinBtn').addEventListener('click', () => { readCosmeticsUI(); saveCosmetics(); document.getElementById('skinScreen').classList.add('hidden'); document.getElementById('menuScreen').classList.remove('hidden'); });
         loadStats();
         loadCosmetics();
+        initClipRecorder();
         requestAnimationFrame(gameLoop);
     </script>
 </body>
