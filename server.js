@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const WebSocket = require('ws');
 
 const PORT = Number(process.env.PORT || 8080);
-const GAME_FILE = path.join(__dirname, 'hot_potato_tycoon_online(1).html');
+const GAME_FILE = path.join(__dirname, 'hot_potato_tycoon_online.html');
 const CONFIG = { width: 2400, height: 1800, radius: 24, speed: 280, dashSpeed: 750, dashDuration: 0.16, dashCooldown: 2, throwSpeed: 950, fuse: 12, trapCooldown: 6, trapLife: 12, trapRadius: 38, trapSlowTime: 1.5 };
 const obstacles = [
   {x:450,y:320,w:220,h:100},{x:1730,y:320,w:220,h:100},{x:450,y:1380,w:220,h:100},{x:1730,y:1380,w:220,h:100},
