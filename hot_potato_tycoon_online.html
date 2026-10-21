@@ -161,12 +161,9 @@
         .skin-row select { width:100%; min-width:0; padding:10px; border-radius:12px; border:2px solid #80d8ff; background:#172033; color:#fff; font-weight:700; }
         #changeSkinBtn { margin-top:18px; background:linear-gradient(135deg,#00bcd4,#1976d2); box-shadow:0 8px 24px rgba(0,188,212,.35); }
         #spectatorPanel{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:80;display:none;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;width:min(94vw,700px);padding:10px;background:#101827ee;border:2px solid #80d8ff;border-radius:18px;box-shadow:0 8px 28px #0009;pointer-events:auto}
-        #spectatorPanel button,#clipActions button{border:2px solid white;border-radius:14px;padding:10px 14px;font-weight:900;background:#263750;color:white;cursor:pointer;font-size:1rem}
+        #spectatorPanel button,
         #spectatorPanel .ghost-action{background:linear-gradient(135deg,#7c4dff,#3949ab)}
-        #clipActions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:4px 0 12px;max-width:90vw}
-        #clipActions button{background:linear-gradient(135deg,#00acc1,#1976d2)}
-        #clipStatus{font-size:.85rem;color:#b8c7df;text-align:center;max-width:90vw;margin-bottom:6px}
-        @media(max-width:700px){#spectatorPanel{bottom:8px;gap:5px;padding:7px}#spectatorPanel button,#clipActions button{font-size:.82rem;padding:9px 10px}}
+        @media(max-width:700px){#spectatorPanel{bottom:8px;gap:5px;padding:7px}#spectatorPanel button,}
         @media(max-width:700px){ .skin-panel{padding:14px}.skin-row{grid-template-columns:90px 1fr;gap:8px}.skin-row select{font-size:.9rem}.skin-preview{width:100px;height:100px} }
         .menu-input-group {
             margin-bottom: 20px;
@@ -406,7 +403,18 @@
             <button id="spectatorMenuBtn">MAIN MENU</button>
         </div>
 
-        <!-- Game Over End Screen with Detailed Post-Match Stats -->
+        <div class="screen-overlay hidden" id="awardsScreen" aria-live="polite">
+            <h1 style="color:#ffeb3b">CORPORATE HONOURS</h1>
+            <div class="subtitle" style="margin-bottom:14px">THE BOARD HAS REACHED ITS VERDICT</div>
+            <div class="stats-box" style="max-width:760px">
+                <div class="stat-card"><div style="font-size:2.2rem">🏆</div><div class="stat-label">CEO OF CHAOS</div><div class="stat-value" id="awardWinnerName" style="font-size:1.3rem">—</div><div class="stat-label">Last tycoon standing</div></div>
+                <div class="stat-card"><div style="font-size:2.2rem">🛡️</div><div class="stat-label">CHIEF RISK OFFICER</div><div class="stat-value" id="awardRiskName" style="font-size:1.3rem">—</div><div class="stat-label" id="awardRiskDetail">Most bomb-pressure survivals</div></div>
+                <div class="stat-card"><div style="font-size:2.2rem">📊</div><div class="stat-label">MARKET MANIPULATOR</div><div class="stat-value" id="awardMarketName" style="font-size:1.3rem">—</div><div class="stat-label" id="awardMarketDetail">Most traps deployed</div></div>
+            </div>
+            <div style="color:#b8c7df;font-weight:800;margin-top:12px">FINALISING QUARTERLY RESULTS… <span id="awardCountdown">9</span>s</div>
+        </div>
+
+        <!-- Final post-match screen -->
         <div class="screen-overlay hidden" id="gameOverScreen">
             <h1 id="gameOverTitle" style="color: #f44336; text-shadow: 4px 4px #b71c1c;">MARKET CRASH!</h1>
             <div class="subtitle" id="gameOverSubtitle">You were blown to corporate smithereens!</div>
@@ -423,13 +431,6 @@
             </div>
 
             <div id="marketQuote" style="font-style: italic; color: #ffeb3b; margin-bottom: 25px; font-size: 18px; text-align: center; max-width: 500px; padding: 0 20px;"></div>
-            
-            <div id="clipActions">
-                <div id="clipHighlight" style="width:100%;font-weight:900;color:#ffeb3b;text-align:center">ROUND HIGHLIGHT: Best moment loading…</div>
-                <button id="downloadClipBtn" type="button">⬇ DOWNLOAD 12s CLIP</button>
-                <button id="shareClipBtn" type="button">↗ SHARE CLIP</button>
-                <div id="clipStatus">Clip capture is local to your browser. Social sharing depends on browser support.</div>
-            </div>
             <button class="btn" id="restartBtn">MAIN MENU</button>
         </div>
     </div>
@@ -655,29 +656,10 @@
 
         let announcementTimer = null;
         let networkGame = { socket: null, connected: false, room: '', playerId: null, mode: false, lastInputSent: 0, pendingAction: null, projectileView: null, statsRecorded: false };
-        let clipRecorder = null, clipChunks = [], clipRecorderReady = false, lastHighlight = 'ROUND HIGHLIGHT: Cartoon chaos compilation';
-        let lastClipActionAt = 0;
-        function initClipRecorder(){
-            if (clipRecorderReady || clipRecorder) return;
-            const c=document.getElementById('gameCanvas');
-            if(!c || !c.captureStream || !window.MediaRecorder){document.getElementById('clipStatus').textContent='Video capture is not supported in this browser. You can still play normally.';return;}
-            try{
-                const stream=c.captureStream(10); const mime=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
-                clipRecorder=new MediaRecorder(stream,mime?{mimeType:mime,videoBitsPerSecond:800000}:{videoBitsPerSecond:800000});
-                clipRecorder.ondataavailable=e=>{if(e.data&&e.data.size){clipChunks.push({blob:e.data,time:Date.now()});clipChunks=clipChunks.filter(x=>Date.now()-x.time<16000);}};
-                clipRecorder.start(1000);clipRecorderReady=true;
-            }catch(e){document.getElementById('clipStatus').textContent='Clip recording could not start in this browser.';}
-        }
-        function recentClipBlob(){const parts=clipChunks.filter(x=>Date.now()-x.time<=12000).map(x=>x.blob);return parts.length?new Blob(parts,{type:clipRecorder?.mimeType||'video/webm'}):null;}
-        function downloadRoundClip(){const b=recentClipBlob();if(!b){document.getElementById('clipStatus').textContent='No clip is ready yet. Play for a few seconds, then try again.';return null;}const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='hot-potato-tycoon-highlight.webm';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000);document.getElementById('clipStatus').textContent='Clip downloaded. It contains the last ~12 seconds captured in this browser.';return b;}
-        async function shareRoundClip(){const b=recentClipBlob();if(!b){document.getElementById('clipStatus').textContent='No clip is ready yet. Play for a few seconds, then try again.';return;}const f=new File([b],'hot-potato-tycoon-highlight.webm',{type:b.type||'video/webm'});if(navigator.share&&navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({title:'Hot Potato Tycoon highlight',text:lastHighlight,files:[f]});document.getElementById('clipStatus').textContent='Share sheet opened.';}catch(e){if(e.name!=='AbortError')document.getElementById('clipStatus').textContent='Sharing was cancelled or is unavailable; use Download instead.';}}else{document.getElementById('clipStatus').textContent='Direct video sharing is not supported here. Download the clip and upload it to your social app.';}}
-        function noteRoundHighlight(message){const m=String(message||'').toLowerCase();if(m.includes('threw the spud'))lastHighlight='ROUND HIGHLIGHT: WORST BETRAYAL — a potato was thrown!';else if(m.includes('used a dash')||m.includes('clutch dash'))lastHighlight='ROUND HIGHLIGHT: MOST CLUTCH DASH';const el=document.getElementById('clipHighlight');if(el)el.textContent=lastHighlight;}
         function setSpectatorMode(show){const panel=document.getElementById('spectatorPanel');if(panel)panel.style.display=show?'flex':'none';}
         function sendSpectatorEmote(emote){if(!networkGame.socket||networkGame.socket.readyState!==WebSocket.OPEN||!networkGame.mode)return;networkGame.socket.send(JSON.stringify({type:'spectatorEmote',emote}));}
         document.querySelectorAll('#spectatorPanel [data-emote]').forEach(b=>b.addEventListener('click',()=>sendSpectatorEmote(b.dataset.emote)));
         document.getElementById('spectatorMenuBtn').addEventListener('click',()=>{if(networkGame.mode&&!networkGame.statsRecorded){networkGame.statsRecorded=true;playerStats.matchesPlayed++;if(gameState.round>playerStats.bestRound)playerStats.bestRound=gameState.round;saveStats();}if(networkGame.socket)networkGame.socket.close();setSpectatorMode(false);document.getElementById('gameOverScreen').classList.add('hidden');document.getElementById('hudLayer').style.display='none';document.getElementById('menuScreen').classList.remove('hidden');networkGame.mode=false;networkGame.connected=false;networkGame.playerId=null;networkGame.room='';});
-        document.getElementById('downloadClipBtn').addEventListener('click',downloadRoundClip);
-        document.getElementById('shareClipBtn').addEventListener('click',shareRoundClip);
 
 
         const marketQuotes = [
@@ -736,6 +718,10 @@
                 this.trapCooldown = 0;
                 this.isTrapped = false;
                 this.animTimer = Math.random() * 10;
+                this.bombReceives = 0;
+                this.bombSurvivalCount = 0;
+                this.successfulPasses = 0;
+                this.trapsPlaced = 0;
             }
 
             update(dt) {
@@ -1178,6 +1164,8 @@
                     for (let p of entities) {
                         if (p.alive && p !== this.thrower && dist(this.x, this.y, p.x, p.y) < p.radius + this.radius) {
                             potatoHolder = p;
+                            if (this.thrower) this.thrower.successfulPasses = (this.thrower.successfulPasses || 0) + 1;
+                            p.bombReceives = (p.bombReceives || 0) + 1;
                             this.active = false;
                             sound.throw();
                             showAnnouncement(`${p.name} CAUGHT IT!`);
@@ -1488,6 +1476,7 @@
         function dropTrap(player) {
             if (player.trapCooldown > 0) return;
             traps.push(new Trap(player.x, player.y, player));
+            player.trapsPlaced = (player.trapsPlaced || 0) + 1;
             player.trapCooldown = 6.0;
             sound.trap();
             floatingTexts.push(new FloatingText(player.x, player.y - 30, "TRAP!", "#9c27b0"));
@@ -1535,6 +1524,7 @@
 
             if (!potatoHolder && projectiles.length === 0 && living.length > 0) {
                 potatoHolder = living[Math.floor(Math.random() * living.length)];
+                potatoHolder.bombReceives = (potatoHolder.bombReceives || 0) + 1;
                 showAnnouncement(`${potatoHolder.name} RECEIVED THE SPUD!`);
             }
 
@@ -1564,6 +1554,7 @@
             sound.explosion();
             gameState.screenShake = 1.0;
 
+            for (const survivor of entities) { if (survivor.alive && survivor !== potatoHolder && (survivor.bombReceives || 0) > 0) survivor.bombSurvivalCount = (survivor.bombSurvivalCount || 0) + 1; }
             if (potatoHolder && potatoHolder.alive) {
                 potatoHolder.alive = false;
                 showAnnouncement(`${potatoHolder.name} OBLITERATED!`);
@@ -1582,6 +1573,24 @@
             potatoHolder = null;
         }
 
+        let awardsTimer = null;
+        function showPostMatchAwards(winner, onlineWinnerName) {
+            if (awardsTimer) clearInterval(awardsTimer);
+            const all = entities.filter(Boolean);
+            const winnerName = onlineWinnerName || (winner && winner.name) || 'No winner';
+            const risk = all.slice().sort((a,b)=>(b.bombSurvivalCount||0)-(a.bombSurvivalCount||0))[0];
+            const market = all.slice().sort((a,b)=>(b.trapsPlaced||0)-(a.trapsPlaced||0))[0];
+            document.getElementById('awardWinnerName').textContent = winnerName;
+            document.getElementById('awardRiskName').textContent = risk && (risk.bombSurvivalCount||0)>0 ? risk.name : 'No qualifying player';
+            document.getElementById('awardRiskDetail').textContent = risk && (risk.bombSurvivalCount||0)>0 ? `${risk.bombSurvivalCount} bomb-pressure survivals` : 'No bomb-pressure survivals recorded';
+            document.getElementById('awardMarketName').textContent = market && (market.trapsPlaced||0)>0 ? market.name : 'No qualifying player';
+            document.getElementById('awardMarketDetail').textContent = market && (market.trapsPlaced||0)>0 ? `${market.trapsPlaced} traps deployed` : 'No traps deployed';
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('awardsScreen').classList.remove('hidden');
+            let remaining = 9; document.getElementById('awardCountdown').textContent = remaining;
+            awardsTimer = setInterval(() => { remaining--; const counter=document.getElementById('awardCountdown'); if(counter) counter.textContent=Math.max(0,remaining); if(remaining<=0){clearInterval(awardsTimer);awardsTimer=null;document.getElementById('awardsScreen').classList.add('hidden');document.getElementById('gameOverScreen').classList.remove('hidden');} },1000);
+        }
+
         function endGame(winner) {
             gameState.active = false;
             const isWinner = winner && winner.isHuman;
@@ -1598,7 +1607,7 @@
             document.getElementById('endStatRound').innerText = gameState.round;
             document.getElementById('endStatSurvivors').innerText = gameState.survivors;
 
-            document.getElementById('gameOverScreen').classList.remove('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
             const title = document.getElementById('gameOverTitle');
             const subtitle = document.getElementById('gameOverSubtitle');
             const quoteEl = document.getElementById('marketQuote');
@@ -1613,7 +1622,7 @@
                 subtitle.innerText = "You were blown to corporate smithereens!";
             }
             quoteEl.innerText = marketQuotes[Math.floor(Math.random() * marketQuotes.length)];
-            document.getElementById('clipHighlight').textContent=lastHighlight;
+            showPostMatchAwards(winner, null);
         }
 
         function render() {
@@ -1831,7 +1840,7 @@
                 }
                 if (msg.type === 'status') { onlineStatus(msg.message); if (!gameState.active) setBanner(msg.message); }
                 if (msg.type === 'snapshot') applyNetworkSnapshot(msg.state);
-                if (msg.type === 'event') { showAnnouncement(msg.message); noteRoundHighlight(msg.message); }
+                if (msg.type === 'event') { showAnnouncement(msg.message); }
                 if (msg.type === 'spectatorEmote') { showAnnouncement(`${msg.emote} ${msg.fromName} sent a harmless ${msg.emote==='🍅'?'tomato':'ghost scare'} toward ${msg.targetName}!`); }
                 if (msg.type === 'spectatorStatus' && String(msg.playerId)===String(networkGame.playerId)) setSpectatorMode(!!msg.show);
                 if (msg.type === 'gameover') {
@@ -1843,13 +1852,15 @@
                         if (gameState.round > playerStats.bestRound) playerStats.bestRound = gameState.round;
                         saveStats();
                     }
-                    document.getElementById('gameOverScreen').classList.remove('hidden');
+                    document.getElementById('gameOverScreen').classList.add('hidden');
                     document.getElementById('gameOverTitle').textContent = msg.winnerId === networkGame.playerId ? 'ONLINE VICTORY!' : 'MARKET CRASH!';
                     document.getElementById('gameOverSubtitle').textContent = msg.winnerId === networkGame.playerId ? 'You are the last tycoon standing!' : 'Another player survived the chaos.';
                     document.getElementById('endStatRound').textContent = gameState.round;
                     document.getElementById('endStatSurvivors').textContent = gameState.survivors;
                     document.getElementById('marketQuote').textContent = 'Online room: ' + networkGame.room;
-                    setSpectatorMode(false); document.getElementById('clipHighlight').textContent=lastHighlight;
+                    const onlineWinner = (msg.players || []).find(p => String(p.id) === String(msg.winnerId));
+                    showPostMatchAwards(onlineWinner || null, onlineWinner && onlineWinner.name ? onlineWinner.name : (String(msg.winnerId) === String(networkGame.playerId) ? gameState.playerName : 'Winning tycoon'));
+                    setSpectatorMode(false); 
                 }
             });
             ws.addEventListener('close', () => {
@@ -2076,7 +2087,7 @@
             initGame();
         });
 
-        document.getElementById('restartBtn').addEventListener('click', () => {
+        document.getElementById('restartBtn').addEventListener('click', () => { if (awardsTimer) { clearInterval(awardsTimer); awardsTimer=null; } document.getElementById('awardsScreen').classList.add('hidden');
             setSpectatorMode(false);
             if (networkGame.mode) {
                 if (networkGame.socket) networkGame.socket.close();
@@ -2116,7 +2127,6 @@
         document.getElementById('finaliseSkinBtn').addEventListener('click', () => { readCosmeticsUI(); saveCosmetics(); document.getElementById('skinScreen').classList.add('hidden'); document.getElementById('menuScreen').classList.remove('hidden'); });
         loadStats();
         loadCosmetics();
-        initClipRecorder();
         requestAnimationFrame(gameLoop);
     </script>
 </body>
