@@ -657,7 +657,7 @@
             ice: {name:'Ice Mountain', floor:'#b7e4f5', tile1:'#e2f7ff', tile2:'#b8e5f4', obstacle:'#76a9c5', conveyors:[{x:500,y:1200,w:360,h:70,dx:0,dy:-1},{x:1540,y:520,w:360,h:70,dx:0,dy:1}], portals:[{x:450,y:450},{x:1950,y:1350}]}
         };
         let currentMap = 'original';
-        const MAP_KEYS = Object.keys(MAPS);
+        const MAP_KEYS = Object.keys(MAPS).filter(key => key !== 'original'); // Every random match includes conveyor belts and teleport portals.
         function pickRandomMap(){ return MAP_KEYS[Math.floor(Math.random()*MAP_KEYS.length)]; }
         const cosmeticCatalog = {
             hats:[{id:'cap',label:'Blue Cap',need:0},{id:'tophat',label:'Top Hat',need:0},{id:'cowboy',label:'Cowboy Hat',need:2},{id:'crown',label:'Golden Crown',need:5},{id:'leaf',label:'Jungle Leaves',need:3},{id:'icehelm',label:'Ice Helmet',need:6}],
