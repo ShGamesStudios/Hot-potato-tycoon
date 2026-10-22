@@ -8,7 +8,7 @@ const PORT = Number(process.env.PORT || 8080);
 const GAME_FILE = path.join(__dirname, 'hot_potato_tycoon_online.html');
 const CONFIG = { width: 2400, height: 1800, radius: 24, speed: 280, dashSpeed: 750, dashDuration: 0.16, dashCooldown: 2, throwSpeed: 950, fuse: 12 };
 const MAPS = { original:{conveyors:[],portals:[]}, jungle:{conveyors:[{x:650,y:650,w:320,h:70,dx:1,dy:0},{x:1430,y:1080,w:320,h:70,dx:-1,dy:0}],portals:[{x:350,y:900},{x:2050,y:900}]}, skyship:{conveyors:[{x:760,y:500,w:380,h:70,dx:1,dy:0},{x:1260,y:1230,w:380,h:70,dx:-1,dy:0}],portals:[{x:500,y:500},{x:1900,y:1300}]}, ice:{conveyors:[{x:500,y:1200,w:360,h:70,dx:0,dy:-1},{x:1540,y:520,w:360,h:70,dx:0,dy:1}],portals:[{x:450,y:450},{x:1950,y:1350}]} };
-function randomMap(){ const keys=Object.keys(MAPS); return keys[Math.floor(Math.random()*keys.length)]; }
+function randomMap(){ const keys=Object.keys(MAPS).filter(key=>key!=='original'); return keys[Math.floor(Math.random()*keys.length)]; }
 function mapObstacles(map){const base=[{x:450,y:320,w:220,h:100},{x:1730,y:320,w:220,h:100},{x:450,y:1380,w:220,h:100},{x:1730,y:1380,w:220,h:100},{x:1050,y:320,w:300,h:120},{x:1050,y:1360,w:300,h:120},{x:280,y:800,w:120,h:280},{x:2000,y:800,w:120,h:280},{x:1080,y:820,w:240,h:160}];const extra=map==='jungle'?[{x:800,y:300,w:150,h:220},{x:1460,y:1280,w:160,h:180},{x:1020,y:650,w:130,h:100}]:map==='skyship'?[{x:760,y:760,w:140,h:240},{x:1500,y:760,w:140,h:240},{x:1000,y:1080,w:400,h:70}]:map==='ice'?[{x:750,y:500,w:180,h:120},{x:1470,y:1180,w:180,h:120},{x:1000,y:700,w:100,h:180}]:[];return map==='original'?base:base.slice(0,5).concat(extra);}
 const obstacles = [
   {x:450,y:320,w:220,h:100},{x:1730,y:320,w:220,h:100},{x:450,y:1380,w:220,h:100},{x:1730,y:1380,w:220,h:100},
