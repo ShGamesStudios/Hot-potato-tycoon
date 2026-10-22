@@ -1483,16 +1483,17 @@
         }
 
         function update(dt) {
+            // Screen shake must decay in BOTH offline and online matches.
+            // Quick Match uses networkGame.mode, which returns early below.
+            if (gameState.screenShake > 0) {
+                gameState.screenShake = Math.max(0, gameState.screenShake - dt * 2);
+            }
+
             if (networkGame.mode) {
                 updateNetworkClient(dt);
                 return;
             }
             if (!gameState.active) return;
-
-            if (gameState.screenShake > 0) {
-                gameState.screenShake -= dt * 2;
-                if (gameState.screenShake < 0) gameState.screenShake = 0;
-            }
 
             if (projectiles.length === 0) {
                 gameState.fuseTime -= dt;
