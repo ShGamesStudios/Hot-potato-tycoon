@@ -476,7 +476,6 @@
         </div>
     </div>
 
-    <button id="muteBtn" type="button" title="Music on/off (M)" onclick="toggleMute()" style="position:fixed;right:14px;bottom:14px;z-index:60;width:46px;height:46px;border-radius:50%;border:3px solid #fff;background:#ff6d00;font-size:22px;cursor:pointer">🔊</button>
     <script>
         // --- SOUND SYNTHESIZER (Web Audio API) ---
         class SoundEngine {
@@ -588,8 +587,8 @@
             if (e.key.toLowerCase() === 'm' && e.target.tagName !== 'INPUT') toggleMute();
         });
         function toggleMute() {
+            // The on-screen sound button is removed; keyboard shortcut M remains available.
             sound.setMuted(!sound.muted);
-            document.getElementById('muteBtn').textContent = sound.muted ? '\u{1F507}' : '\u{1F50A}';
         }
 
         // --- GAME CONFIGURATION & STATE ---
