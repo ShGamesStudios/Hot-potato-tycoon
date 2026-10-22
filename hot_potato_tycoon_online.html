@@ -271,6 +271,47 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.4);
             text-shadow: 1px 1px #000;
         }
+        /* Mobile: stack action buttons vertically on the right, away from the joystick. */
+        @media (max-width: 850px) {
+            .touch-joystick-base {
+                width: 108px;
+                height: 108px;
+                left: 14px;
+                bottom: 14px;
+            }
+            .touch-joystick-thumb {
+                width: 50px;
+                height: 50px;
+                top: 26px;
+                left: 26px;
+            }
+            .touch-buttons {
+                right: 12px;
+                bottom: 12px;
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+            }
+            .touch-buttons .t-btn {
+                width: 58px !important;
+                height: 58px !important;
+                font-size: .78rem !important;
+                border-width: 2px;
+            }
+            .touch-buttons #throwBtn {
+                width: 68px !important;
+                height: 68px !important;
+                font-size: .82rem !important;
+            }
+        }
+        @media (max-width: 850px) and (max-height: 520px) {
+            .touch-buttons { gap: 4px; bottom: 6px; right: 8px; }
+            .touch-buttons .t-btn { width: 48px !important; height: 48px !important; font-size: .68rem !important; }
+            .touch-buttons #throwBtn { width: 54px !important; height: 54px !important; font-size: .7rem !important; }
+            .touch-joystick-base { width: 92px; height: 92px; left: 8px; bottom: 8px; }
+            .touch-joystick-thumb { width: 42px; height: 42px; top: 22px; left: 22px; }
+        }
+
         .t-btn:active {
             background: rgba(244, 67, 54, 0.9);
             transform: scale(0.92);
